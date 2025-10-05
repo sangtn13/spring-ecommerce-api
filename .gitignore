@@ -1,15 +1,86 @@
-# Build files
+HELP.md
 target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-# IDE files
-.idea/
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
 *.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
 .vscode/
 
-# OS files
+### Security & Sensitive Files ###
+# Environment files with secrets
+.env
+.env.local
+.env.production
+.env.staging
+
+# Application config files with secrets
+application-local.properties
+application-prod.properties
+application-production.properties
+**/application-secrets.properties
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Sensitive configuration
-application-*.properties
-.env
+# Backup files
+*.bak
+*.backup
+*.tmp
+*.temp
+
+# IDE specific files
+*.swp
+*.swo
+*~
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.jks
+*.p12
+
+# Docker
+.dockerignore

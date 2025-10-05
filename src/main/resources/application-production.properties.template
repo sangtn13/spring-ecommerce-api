@@ -1,0 +1,20 @@
+# Production Configuration Template
+# This file shows the structure for production environment
+# Actual values should be set via environment variables
+
+# Database Configuration (Production)
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+
+# Security Configuration
+spring.jpa.show-sql=false
+spring.jpa.hibernate.ddl-auto=validate
+
+# JWT Configuration
+sshop.app.jwtSecret=${JWT_SECRET}
+sshop.app.jwtExpirationMs=${JWT_EXPIRATION:3600000}
+
+# Logging
+logging.level.com.ecommerce.sshop=INFO
+logging.level.org.springframework.security=WARN
