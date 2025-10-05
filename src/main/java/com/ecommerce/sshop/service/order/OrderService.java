@@ -5,21 +5,24 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.springframework.stereotype.Service;
-
 import com.ecommerce.sshop.enums.OrderStatus;
-import com.ecommerce.sshop.exception.OrderNotFoundException;
-import com.ecommerce.sshop.model.Cart;
-import com.ecommerce.sshop.model.Order;
-import com.ecommerce.sshop.repository.IOrderRepository;
-import com.ecommerce.sshop.repository.IProductRepository;
+import com.ecommerce.sshop.exception.carts.EmptyCartException;
+import com.ecommerce.sshop.exception.order.InsufficientStockException;
+import com.ecommerce.sshop.exception.order.OrderNotFoundException;
+import com.ecommerce.sshop.model.carts.Cart;
+import com.ecommerce.sshop.model.orders.Order;
+import com.ecommerce.sshop.repository.order.IOrderRepository;
+import com.ecommerce.sshop.repository.product.IProductRepository;
 import com.ecommerce.sshop.service.cart.ICartService;
-import com.ecommerce.sshop.model.OrderItem;
-import com.ecommerce.sshop.dto.OrderDto;
-import com.ecommerce.sshop.model.Product;
+import com.ecommerce.sshop.model.orders.OrderItem;
+import com.ecommerce.sshop.dto.orders.OrderDto;
+import com.ecommerce.sshop.model.product.Product;
 
 import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +33,15 @@ public class OrderService implements IOrderService {
     private final ModelMapper modelMapper;
 
     @Override
+    @Transactional
     public Order placeOrder(Long userId) {
         Cart cart = cartService.getCartByUserId(userId);
         if (cart.getItems().isEmpty()) {
-            throw new IllegalStateException("Cannot place order with an empty cart");
+            throw new EmptyCartException("Cannot place order with an empty cart");
         }
+
+        validateStock(cart);
+
         Order order = createOrder(cart);
         List<OrderItem> orderItems = createOrderItems(order, cart);
         BigDecimal totalAmount = calculateTotalAmount(orderItems);
@@ -43,6 +50,19 @@ public class OrderService implements IOrderService {
         Order savedOrder = orderRepository.save(order);
         cartService.clearCart(cart.getId());
         return savedOrder;
+    }
+
+    private void validateStock(Cart cart) {
+        cart.getItems().forEach(cartItem -> {
+            Product product = cartItem.getProduct();
+            if (product.getInventory() < cartItem.getQuantity()) {
+                throw new InsufficientStockException(
+                        String.format("Insufficient stock for product '%s'. Available: %d, Requested: %d",
+                                product.getName(),
+                                product.getInventory(),
+                                cartItem.getQuantity()));
+            }
+        });
     }
 
     private Order createOrder(Cart cart) {
@@ -83,7 +103,8 @@ public class OrderService implements IOrderService {
                 .toList();
     }
 
-    private OrderDto convertToDto(Order order) {
+    @Override
+    public OrderDto convertToDto(Order order) {
         return modelMapper.map(order, OrderDto.class);
     }
 

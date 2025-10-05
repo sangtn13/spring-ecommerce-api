@@ -1,9 +1,9 @@
 package com.ecommerce.sshop.service.product;
 
-import com.ecommerce.sshop.dto.ProductDto;
-import com.ecommerce.sshop.model.Product;
-import com.ecommerce.sshop.request.AddProductRequest;
-import com.ecommerce.sshop.request.UpdateProductRequest;
+import com.ecommerce.sshop.dto.product.ProductDto;
+import com.ecommerce.sshop.model.product.Product;
+import com.ecommerce.sshop.request.products.AddProductRequest;
+import com.ecommerce.sshop.request.products.UpdateProductRequest;
 
 import java.util.List;
 
@@ -11,9 +11,7 @@ public interface IProductService {
 
     Product addProduct(AddProductRequest request);
 
-
     Product getProductById(Long id);
-
 
     void deleteProduct(Long id);
 

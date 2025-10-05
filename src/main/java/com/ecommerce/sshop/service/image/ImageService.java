@@ -1,21 +1,23 @@
 package com.ecommerce.sshop.service.image;
 
-import com.ecommerce.sshop.dto.ImageDto;
-import com.ecommerce.sshop.exception.ImageNotFoundException;
-import com.ecommerce.sshop.model.Image;
-import com.ecommerce.sshop.model.Product;
-import com.ecommerce.sshop.repository.IImageRepository;
-import com.ecommerce.sshop.service.product.IProductService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.sql.rowset.serial.SerialBlob;
 import javax.sql.rowset.serial.SerialException;
-import java.io.IOException;
 import java.sql.SQLException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.ecommerce.sshop.dto.image.ImageDto;
+import com.ecommerce.sshop.exception.image.ImageNotFoundException;
+import com.ecommerce.sshop.model.image.Image;
+import com.ecommerce.sshop.model.product.Product;
+import com.ecommerce.sshop.repository.image.IImageRepository;
+import com.ecommerce.sshop.service.product.IProductService;
+
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor

@@ -1,22 +1,25 @@
 package com.ecommerce.sshop.service.product;
 
-import com.ecommerce.sshop.dto.ImageDto;
-import com.ecommerce.sshop.dto.ProductDto;
-import com.ecommerce.sshop.exception.ProductNotFoundException;
-import com.ecommerce.sshop.model.Category;
-import com.ecommerce.sshop.model.Image;
-import com.ecommerce.sshop.model.Product;
-import com.ecommerce.sshop.repository.ICategoryRepository;
-import com.ecommerce.sshop.repository.IImageRepository;
-import com.ecommerce.sshop.repository.IProductRepository;
-import com.ecommerce.sshop.request.AddProductRequest;
-import com.ecommerce.sshop.request.UpdateProductRequest;
-import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.ecommerce.sshop.dto.image.ImageDto;
+import com.ecommerce.sshop.dto.product.ProductDto;
+import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.product.ProductNotFoundException;
+import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.model.image.Image;
+import com.ecommerce.sshop.model.product.Product;
+import com.ecommerce.sshop.repository.category.ICategoryRepository;
+import com.ecommerce.sshop.repository.image.IImageRepository;
+import com.ecommerce.sshop.repository.product.IProductRepository;
+import com.ecommerce.sshop.request.products.AddProductRequest;
+import com.ecommerce.sshop.request.products.UpdateProductRequest;
+
+import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,12 @@ public class ProductService implements IProductService {
 
     @Override
     public Product addProduct(AddProductRequest request) {
+
+        if (isProductExist(request.getName(), request.getBrand())) {
+            throw new AlreadyExistsException("Product with name " + request.getName() + " and brand "
+                    + request.getBrand() + " already exists.");
+        }
+
         Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
                 .orElseGet(() -> {
                     Category newCategory = new Category(request.getCategory().getName());
@@ -56,6 +65,13 @@ public class ProductService implements IProductService {
 
     @Override
     public Product updateProduct(UpdateProductRequest product, Long productId) {
+
+        if (isProductExist(product.getName(), product.getBrand())
+                && !getProductById(productId).getName().equals(product.getName())) {
+            throw new AlreadyExistsException(
+                    "Product with name " + product.getName() + " and brand " + product.getBrand() + " already exists.");
+        }
+
         return productRepository.findById(productId)
                 .map(existingProduct -> updateExistingProduct(existingProduct, product)).map(productRepository::save)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found!!"));
@@ -121,5 +137,9 @@ public class ProductService implements IProductService {
                 .map(image -> modelMapper.map(image, ImageDto.class)).toList();
         productDto.setImages(imageDtos);
         return productDto;
+    }
+
+    private boolean isProductExist(String name, String brand) {
+        return productRepository.existsByNameAndBrand(name, brand);
     }
 }

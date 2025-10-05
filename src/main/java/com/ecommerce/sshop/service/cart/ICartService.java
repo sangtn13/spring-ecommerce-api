@@ -2,7 +2,9 @@ package com.ecommerce.sshop.service.cart;
 
 import java.math.BigDecimal;
 
-import com.ecommerce.sshop.model.Cart;
+import com.ecommerce.sshop.model.carts.Cart;
+import com.ecommerce.sshop.model.user.User;
+import com.ecommerce.sshop.dto.carts.CartDto;
 
 public interface ICartService {
     Cart getCart(Long id);
@@ -11,7 +13,9 @@ public interface ICartService {
 
     BigDecimal getTotalPrice(Long id);
 
-    Long initializeNewCart();
+    Cart initializeNewCart(User user);
 
     Cart getCartByUserId(Long userId);
+
+    CartDto convertToDto(Cart cart);
 }

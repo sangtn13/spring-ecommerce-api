@@ -1,6 +1,6 @@
 package com.ecommerce.sshop.service.category;
 
-import com.ecommerce.sshop.model.Category;
+import com.ecommerce.sshop.model.category.Category;
 
 import java.util.List;
 

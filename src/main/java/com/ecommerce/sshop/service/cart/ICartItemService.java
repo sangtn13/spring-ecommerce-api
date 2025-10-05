@@ -1,6 +1,6 @@
 package com.ecommerce.sshop.service.cart;
 
-import com.ecommerce.sshop.model.CartItem;
+import com.ecommerce.sshop.model.carts.CartItem;
 
 public interface ICartItemService {
     void addItemToCart(Long cartId, Long productId, int quantity);

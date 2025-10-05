@@ -1,25 +1,34 @@
 package com.ecommerce.sshop.service.user;
 
 import java.util.Optional;
+import java.util.Set;
 
-import org.modelmapper.ModelMapper;
-import org.springframework.stereotype.Service;
-
-import com.ecommerce.sshop.exception.AlreadyExistsException;
-import com.ecommerce.sshop.exception.UserNotFoundException;
-import com.ecommerce.sshop.model.User;
-import com.ecommerce.sshop.request.CreateUserRequest;
-import com.ecommerce.sshop.request.UpdateUserRequest;
-import com.ecommerce.sshop.repository.IUserRepository;
-import com.ecommerce.sshop.dto.UserDto;
+import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.user.UserNotFoundException;
+import com.ecommerce.sshop.model.user.User;
+import com.ecommerce.sshop.request.users.CreateUserRequest;
+import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserRequest;
+import com.ecommerce.sshop.repository.user.IUserRepository;
+import com.ecommerce.sshop.dto.user.UserDto;
+import com.ecommerce.sshop.repository.role.IRoleRepository;
+import com.ecommerce.sshop.model.role.Role;
 
 import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class UserService implements IUserService {
     private final IUserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final IRoleRepository roleRepository;
 
     @Override
     public User getUserById(Long userId) {
@@ -36,11 +45,43 @@ public class UserService implements IUserService {
                     newUser.setFirstName(req.getFirstName());
                     newUser.setLastName(req.getLastName());
                     newUser.setEmail(req.getEmail());
-                    newUser.setPassword(req.getPassword()); // In real applications, ensure to hash passwords
+                    newUser.setPassword(passwordEncoder.encode(req.getPassword()));
+
+                    // Set default role as "User"
+                    Role userRole = roleRepository.findByName("User")
+                            .orElseThrow(() -> new RuntimeException("Role 'User' not found"));
+                    newUser.setRoles(Set.of(userRole));
+
                     return userRepository.save(newUser);
                 })
                 .orElseThrow(() -> new AlreadyExistsException("User already exists with email: " + request.getEmail()));
 
+    }
+
+    @Override
+    public User createUserWithRole(CreateUserWithRoleRequest request) {
+        return Optional.of(request)
+                .filter(req -> !userRepository.existsByEmail(req.getEmail()))
+                .map(req -> {
+                    User newUser = new User();
+                    newUser.setFirstName(req.getFirstName());
+                    newUser.setLastName(req.getLastName());
+                    newUser.setEmail(req.getEmail());
+                    newUser.setPassword(passwordEncoder.encode(req.getPassword()));
+
+                    // Set role based on request, default to "User" if not specified
+                    String requestedRole = (req.getRole() != null && !req.getRole().isEmpty()) ? req.getRole() : "User";
+                    final String roleName = (requestedRole.equals("User") || requestedRole.equals("Admin"))
+                            ? requestedRole
+                            : "User";
+
+                    Role role = roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found"));
+                    newUser.setRoles(Set.of(role));
+
+                    return userRepository.save(newUser);
+                })
+                .orElseThrow(() -> new AlreadyExistsException("User already exists with email: " + request.getEmail()));
     }
 
     @Override
@@ -69,5 +110,12 @@ public class UserService implements IUserService {
     @Override
     public UserDto convertUserToDto(User user) {
         return modelMapper.map(user, UserDto.class);
+    }
+
+    @Override
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return userRepository.findByEmail(email);
     }
 }

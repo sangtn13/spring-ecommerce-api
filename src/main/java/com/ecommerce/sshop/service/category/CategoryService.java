@@ -1,14 +1,16 @@
 package com.ecommerce.sshop.service.category;
 
-import com.ecommerce.sshop.exception.AlreadyExistsException;
-import com.ecommerce.sshop.exception.CategoryNotFoundException;
-import com.ecommerce.sshop.model.Category;
-import com.ecommerce.sshop.repository.ICategoryRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
+import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.repository.category.ICategoryRepository;
+
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +41,10 @@ public class CategoryService implements ICategoryService {
 
     @Override
     public Category updateCategory(Category category, Long id) {
+        if (categoryRepository.existsByName(category.getName())
+                && !getCategoryById(id).getName().equals(category.getName())) {
+            throw new AlreadyExistsException(category.getName() + " already exists");
+        }
         return Optional.ofNullable(getCategoryById(id)).map(oldCategory -> {
             oldCategory.setName(category.getName());
             return categoryRepository.save(oldCategory);

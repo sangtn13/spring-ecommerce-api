@@ -33,17 +33,12 @@ build/
 .vscode/
 
 ### Security & Sensitive Files ###
-# Environment files with secrets
-.env
-.env.local
-.env.production
-.env.staging
-
 # Application config files with secrets
-application-local.properties
-application-prod.properties
-application-production.properties
+application.properties
 **/application-secrets.properties
+
+# Main application properties (contains sensitive data)
+src/main/resources/application.properties
 
 # Database files
 *.db
