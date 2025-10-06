@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.0.0...v1.1.0) (2025-10-06)
+
+
+### Features
+
+* add comprehensive pagination utility for e-commerce application ([cc747b0](https://github.com/SangTran13/spring-ecommerce-api/commit/cc747b0588fb77497d05103c45794714b271512c))
+
 # 1.0.0 (2025-10-06)
 
 
