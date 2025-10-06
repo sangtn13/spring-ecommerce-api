@@ -3,12 +3,9 @@ package com.ecommerce.sshop.controller.carts;
 import com.ecommerce.sshop.service.cart.ICartItemService;
 import com.ecommerce.sshop.service.cart.ICartService;
 import com.ecommerce.sshop.service.user.IUserService;
-import com.ecommerce.sshop.exception.carts.CartItemNotFoundException;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.response.ApiResponse;
-
-import io.jsonwebtoken.JwtException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +17,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 
 @RequiredArgsConstructor
 @RestController
@@ -33,41 +29,26 @@ public class CartItemController {
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> addItemToCart(@RequestParam Long productId,
             @RequestParam Integer quantity) {
-        try {
-
-            User user = userService.getCurrentUser();
-            Cart cart = cartService.initializeNewCart(user);
-            cartItemService.addItemToCart(cart.getId(), productId, quantity);
-            return ResponseEntity.ok(new ApiResponse("Item added to cart successfully", null));
-        } catch (CartItemNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Cart item not found", null));
-        } catch (JwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse("Unauthorized: " + e.getMessage(), null));
-        }
+        User user = userService.getCurrentUser();
+        Cart cart = cartService.initializeNewCart(user);
+        cartItemService.addItemToCart(cart.getId(), productId, quantity);
+        return ResponseEntity.ok(new ApiResponse("Item added to cart successfully", null));
     }
 
-    @DeleteMapping("/{cartId}/remove/{itemId}")
-    public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable Long cartId, @PathVariable Long itemId) {
-        try {
-            cartItemService.removeItemFromCart(cartId, itemId);
-            return ResponseEntity.ok(new ApiResponse("Item removed from cart successfully", null));
-        } catch (CartItemNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Cart item not found", null));
-        }
+    @DeleteMapping("/remove/{itemId}")
+    public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable Long itemId) {
+        User user = userService.getCurrentUser();
+        Cart cart = cartService.getCartByUserId(user.getId());
+        cartItemService.removeItemFromCart(cart.getId(), itemId);
+        return ResponseEntity.ok(new ApiResponse("Item removed from cart successfully", null));
     }
 
-    @PutMapping("/{cartId}/update/{itemId}")
-    public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable Long cartId, @PathVariable Long itemId,
+    @PutMapping("/update/{itemId}")
+    public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable Long itemId,
             @RequestParam Integer quantity) {
-        try {
-            cartItemService.updateItemQuantity(cartId, itemId, quantity);
-            return ResponseEntity.ok(new ApiResponse("Item quantity updated successfully", null));
-        } catch (CartItemNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Cart item not found", null));
-        }
+        User user = userService.getCurrentUser();
+        Cart cart = cartService.getCartByUserId(user.getId());
+        cartItemService.updateItemQuantity(cart.getId(), itemId, quantity);
+        return ResponseEntity.ok(new ApiResponse("Item quantity updated successfully", null));
     }
 }

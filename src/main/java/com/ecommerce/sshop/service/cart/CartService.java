@@ -66,6 +66,23 @@ public class CartService implements ICartService {
     }
 
     @Override
+    @Transactional
+    public void clearCartByUserId(Long userId) {
+        Cart cart = getCartByUserId(userId);
+        Long cartId = cart.getId();
+        cartItemRepository.deleteAllByCartId(cartId);
+        cart.getItems().clear();
+        cart.setTotalAmount(BigDecimal.ZERO);
+        cartRepository.deleteById(cartId);
+    }
+
+    @Override
+    public BigDecimal getTotalPriceByUserId(Long userId) {
+        Cart cart = getCartByUserId(userId);
+        return cart.getTotalAmount();
+    }
+
+    @Override
     public CartDto convertToDto(Cart cart) {
         return modelMapper.map(cart, CartDto.class);
     }

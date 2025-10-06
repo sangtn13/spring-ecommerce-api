@@ -116,6 +116,12 @@ public class UserService implements IUserService {
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        return userRepository.findByEmail(email);
+        User user = userRepository.findByEmail(email);
+
+        if (user == null) {
+            throw new UserNotFoundException("User not found with email: " + email);
+        }
+
+        return user;
     }
 }

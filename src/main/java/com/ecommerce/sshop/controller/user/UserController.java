@@ -1,7 +1,5 @@
 package com.ecommerce.sshop.controller.user;
 
-import com.ecommerce.sshop.exception.common.AlreadyExistsException;
-import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
@@ -28,6 +26,13 @@ import org.springframework.http.ResponseEntity;
 public class UserController {
     private final IUserService userService;
 
+    @GetMapping("/my-profile")
+    public ResponseEntity<ApiResponse> getCurrentUserProfile() {
+        User user = userService.getCurrentUser();
+        UserDto userDto = userService.convertUserToDto(user);
+        return ResponseEntity.ok(new ApiResponse("User profile retrieved successfully", userDto));
+    }
+
     @PreAuthorize("hasAuthority('Admin')")
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable Long userId) {
@@ -43,13 +48,9 @@ public class UserController {
     @PreAuthorize("hasAuthority('Admin')")
     @PostMapping()
     public ResponseEntity<ApiResponse> createUser(@RequestBody CreateUserWithRoleRequest user) {
-        try {
-            User createdUser = userService.createUserWithRole(user);
-            UserDto userDto = userService.convertUserToDto(createdUser);
-            return ResponseEntity.ok(new ApiResponse("User created successfully", userDto));
-        } catch (AlreadyExistsException e) {
-            return ResponseEntity.status(409).body(new ApiResponse("User already exists", null));
-        }
+        User createdUser = userService.createUserWithRole(user);
+        UserDto userDto = userService.convertUserToDto(createdUser);
+        return ResponseEntity.ok(new ApiResponse("User created successfully", userDto));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
@@ -62,17 +63,12 @@ public class UserController {
         } else {
             return ResponseEntity.status(404).body(new ApiResponse("User not found", null));
         }
-
     }
 
     @PreAuthorize("hasAuthority('Admin')")
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
-        try {
-            userService.deleteUser(userId);
-            return ResponseEntity.ok(new ApiResponse("User deleted successfully", null));
-        } catch (UserNotFoundException e) {
-            return ResponseEntity.status(404).body(new ApiResponse("User not found", null));
-        }
+        userService.deleteUser(userId);
+        return ResponseEntity.ok(new ApiResponse("User deleted successfully", null));
     }
 }

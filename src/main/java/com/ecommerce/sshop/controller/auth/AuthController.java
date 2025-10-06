@@ -8,7 +8,6 @@ import com.ecommerce.sshop.security.jwt.JwtUtils;
 import com.ecommerce.sshop.security.user.ShopUserDetails;
 import com.ecommerce.sshop.service.user.IUserService;
 import com.ecommerce.sshop.model.user.User;
-import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -51,12 +50,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody CreateUserRequest registerRequest) {
-        try {
-            User user = userService.createUser(registerRequest);
-            return ResponseEntity.ok(
-                    new ApiResponse("Registration successful! You can now login with your credentials.", user.getId()));
-        } catch (AlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), null));
-        }
+        User user = userService.createUser(registerRequest);
+        return ResponseEntity.ok(
+                new ApiResponse("Registration successful! You can now login with your credentials.", user.getId()));
+
     }
 }

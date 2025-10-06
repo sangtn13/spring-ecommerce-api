@@ -3,15 +3,15 @@ package com.ecommerce.sshop.controller.carts;
 import java.math.BigDecimal;
 
 import com.ecommerce.sshop.dto.carts.CartDto;
-import com.ecommerce.sshop.exception.carts.CartNotFoundException;
 import com.ecommerce.sshop.model.carts.Cart;
+import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.cart.ICartService;
+import com.ecommerce.sshop.service.user.IUserService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -19,39 +19,28 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${api.prefix}/carts")
 public class CartController {
     private final ICartService cartService;
+    private final IUserService userService;
 
-    @GetMapping("/{cartId}")
-    public ResponseEntity<ApiResponse> getCart(@PathVariable Long cartId) {
-        try {
-            Cart cart = cartService.getCart(cartId);
-            CartDto cartDto = cartService.convertToDto(cart);
-            return ResponseEntity.ok(new ApiResponse("Cart retrieved successfully", cartDto));
-        } catch (CartNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Cart not found", null));
-        }
+    @GetMapping("my-cart")
+    public ResponseEntity<ApiResponse> getCart() {
+        User user = userService.getCurrentUser();
+        Cart cart = cartService.getCartByUserId(user.getId());
+        CartDto cartDto = cartService.convertToDto(cart);
+        return ResponseEntity.ok(new ApiResponse("Cart retrieved successfully", cartDto));
     }
 
-    @DeleteMapping("/{cartId}/clear")
-    public ResponseEntity<ApiResponse> clearCart(@PathVariable Long cartId) {
-        try {
-            cartService.clearCart(cartId);
-            return ResponseEntity.ok(new ApiResponse("Cart cleared successfully", null));
-        } catch (CartNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Cart not found", null));
-        }
+    @DeleteMapping("/clear")
+    public ResponseEntity<ApiResponse> clearCart() {
+        User user = userService.getCurrentUser();
+        cartService.clearCartByUserId(user.getId());
+        return ResponseEntity.ok(new ApiResponse("Cart cleared successfully", null));
     }
 
-    @GetMapping("/{cartId}/total")
-    public ResponseEntity<ApiResponse> getTotalAmount(@PathVariable Long cartId) {
-        try {
-            BigDecimal totalPrice = cartService.getTotalPrice(cartId);
-            return ResponseEntity.ok(new ApiResponse("Total amount retrieved successfully", totalPrice));
-        } catch (CartNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Cart not found", null));
-        }
+    @GetMapping("/total")
+    public ResponseEntity<ApiResponse> getTotalAmount() {
+        User user = userService.getCurrentUser();
+        BigDecimal totalPrice = cartService.getTotalPriceByUserId(user.getId());
+        return ResponseEntity.ok(new ApiResponse("Total amount retrieved successfully", totalPrice));
     }
 
 }

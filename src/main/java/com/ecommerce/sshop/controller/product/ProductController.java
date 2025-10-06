@@ -3,7 +3,6 @@ package com.ecommerce.sshop.controller.product;
 import java.util.List;
 
 import com.ecommerce.sshop.dto.product.ProductDto;
-import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
 import com.ecommerce.sshop.model.product.Product;
 import com.ecommerce.sshop.request.products.AddProductRequest;
@@ -33,51 +32,33 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getProductById(@PathVariable Long id) {
-        try {
-            Product product = productService.getProductById(id);
-            ProductDto convertedProduct = productService.convertToDto(product);
-            return ResponseEntity.ok(new ApiResponse("Product retrieved successfully", convertedProduct));
-        } catch (ProductNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Product not found", null));
-        }
+        Product product = productService.getProductById(id);
+        ProductDto convertedProduct = productService.convertToDto(product);
+        return ResponseEntity.ok(new ApiResponse("Product retrieved successfully", convertedProduct));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
     @PostMapping()
     public ResponseEntity<ApiResponse> addProduct(@RequestBody AddProductRequest product) {
-        try {
-            Product theProduct = productService.addProduct(product);
-            ProductDto convertedProduct = productService.convertToDto(theProduct);
-            return ResponseEntity.ok(new ApiResponse("Product added successfully", convertedProduct));
-        } catch (AlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), null));
-        }
+        Product theProduct = productService.addProduct(product);
+        ProductDto convertedProduct = productService.convertToDto(theProduct);
+        return ResponseEntity.ok(new ApiResponse("Product added successfully", convertedProduct));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse> updateProduct(@RequestBody UpdateProductRequest request,
             @PathVariable Long productId) {
-        try {
-            Product theProduct = productService.updateProduct(request, productId);
-            ProductDto convertedProduct = productService.convertToDto(theProduct);
-            return ResponseEntity.ok(new ApiResponse("Product updated successfully", convertedProduct));
-        } catch (ProductNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Product not found", null));
-        } catch (AlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResponse(e.getMessage(), null));
-        }
+        Product theProduct = productService.updateProduct(request, productId);
+        ProductDto convertedProduct = productService.convertToDto(theProduct);
+        return ResponseEntity.ok(new ApiResponse("Product updated successfully", convertedProduct));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
-        try {
-            productService.deleteProduct(productId);
-            return ResponseEntity.ok(new ApiResponse("Product deleted successfully", productId));
-        } catch (ProductNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Product not found", null));
-        }
+        productService.deleteProduct(productId);
+        return ResponseEntity.ok(new ApiResponse("Product deleted successfully", productId));
     }
 
     @GetMapping("/by-brand-and-name")

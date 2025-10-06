@@ -3,6 +3,7 @@ package com.ecommerce.sshop.service.cart;
 import java.math.BigDecimal;
 
 import com.ecommerce.sshop.exception.carts.CartItemNotFoundException;
+import com.ecommerce.sshop.exception.carts.QuantityInvalidException;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.carts.CartItem;
 import com.ecommerce.sshop.model.product.Product;
@@ -28,6 +29,9 @@ public class CartItemService implements ICartItemService {
         Product product = productService.getProductById(productId);
         CartItem cartItem = cart.getItems().stream().filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst().orElse(new CartItem());
+        if (quantity <= 0) {
+            throw new QuantityInvalidException("Quantity must be greater than zero");
+        }
         if (cartItem.getId() == null) {
             cartItem.setProduct(product);
             cartItem.setQuantity(quantity);

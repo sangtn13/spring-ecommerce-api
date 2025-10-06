@@ -18,4 +18,8 @@ public interface ICartService {
     Cart getCartByUserId(Long userId);
 
     CartDto convertToDto(Cart cart);
+
+    void clearCartByUserId(Long userId);
+
+    BigDecimal getTotalPriceByUserId(Long userId);
 }
