@@ -2,9 +2,12 @@ package com.ecommerce.sshop.exception.common;
 
 import com.ecommerce.sshop.exception.carts.CartNotFoundException;
 import com.ecommerce.sshop.exception.carts.QuantityInvalidException;
+import com.ecommerce.sshop.exception.carts.EmptyCartException;
+import com.ecommerce.sshop.exception.order.OrderNotFoundException;
+import com.ecommerce.sshop.exception.order.StatusInvalidException;
+import com.ecommerce.sshop.exception.order.InsufficientStockException;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.exception.image.ImageNotFoundException;
-import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
 import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.response.ApiResponse;
@@ -26,6 +29,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             QuantityInvalidException.class,
+            InsufficientStockException.class,
+            EmptyCartException.class,
+            StatusInvalidException.class,
     })
     public ResponseEntity<ApiResponse> handleBadRequestException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

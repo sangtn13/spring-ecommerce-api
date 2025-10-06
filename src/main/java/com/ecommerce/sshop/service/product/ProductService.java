@@ -19,6 +19,8 @@ import com.ecommerce.sshop.request.products.UpdateProductRequest;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -141,5 +143,29 @@ public class ProductService implements IProductService {
 
     private boolean isProductExist(String name, String brand) {
         return productRepository.existsByNameAndBrand(name, brand);
+    }
+
+    @Override
+    public Page<ProductDto> getAllProductsWithPaging(Pageable pageable) {
+        Page<Product> products = productRepository.findAll(pageable);
+        return products.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<ProductDto> getProductsByCategoryWithPaging(String category, Pageable pageable) {
+        Page<Product> products = productRepository.findByCategoryName(category, pageable);
+        return products.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<ProductDto> getProductsByBrandWithPaging(String brand, Pageable pageable) {
+        Page<Product> products = productRepository.findByBrand(brand, pageable);
+        return products.map(this::convertToDto);
+    }
+
+    @Override
+    public Page<ProductDto> searchProductsWithPaging(String keyword, Pageable pageable) {
+        Page<Product> products = productRepository.searchProducts(keyword, pageable);
+        return products.map(this::convertToDto);
     }
 }

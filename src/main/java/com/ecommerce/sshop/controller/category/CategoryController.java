@@ -1,16 +1,18 @@
 package com.ecommerce.sshop.controller.category;
 
-import java.util.List;
-
 import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.response.ApiResponse;
+import com.ecommerce.sshop.response.PagedResponse;
 import com.ecommerce.sshop.service.category.ICategoryService;
+import com.ecommerce.sshop.util.PageUtil;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @RequiredArgsConstructor
 @RestController
@@ -19,9 +21,15 @@ public class CategoryController {
     private final ICategoryService categoryService;
 
     @GetMapping()
-    public ResponseEntity<ApiResponse> getAllCategories() {
-        List<Category> categories = categoryService.getAllCategories();
-        return ResponseEntity.ok(new ApiResponse("Categories retrieved successfully", categories));
+    public ResponseEntity<ApiResponse> getAllCategories(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+        Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
+        Page<Category> categoryPage = categoryService.getAllCategoriesWithPaging(pageable);
+        PagedResponse<Category> pagedResponse = PagedResponse.of(categoryPage);
+        return ResponseEntity.ok(new ApiResponse("Categories retrieved successfully", pagedResponse));
     }
 
     @PreAuthorize("hasAuthority('Admin')")

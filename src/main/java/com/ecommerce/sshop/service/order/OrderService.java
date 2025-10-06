@@ -8,6 +8,7 @@ import java.util.List;
 import com.ecommerce.sshop.enums.OrderStatus;
 import com.ecommerce.sshop.exception.carts.EmptyCartException;
 import com.ecommerce.sshop.exception.order.InsufficientStockException;
+import com.ecommerce.sshop.exception.order.StatusInvalidException;
 import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.orders.Order;
@@ -21,6 +22,8 @@ import com.ecommerce.sshop.model.product.Product;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,8 +107,42 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @Transactional
+    public Order updateOrderStatus(Long orderId, OrderStatus status) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+        if (!isValidStatusTransition(order.getOrderStatus(), status)) {
+            throw new StatusInvalidException(
+                    String.format("Invalid status transition from %s to %s", order.getOrderStatus(), status));
+        }
+        order.setOrderStatus(status);
+        return orderRepository.save(order);
+    }
+
+    private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
+        switch (currentStatus) {
+            case PENDING:
+                return newStatus == OrderStatus.PROCESSING || newStatus == OrderStatus.CANCELED;
+            case PROCESSING:
+                return newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.CANCELED;
+            case SHIPPED:
+                return newStatus == OrderStatus.DELIVERED;
+            case DELIVERED:
+            case CANCELED:
+                return false; // No transitions allowed from DELIVERED or CANCELED
+            default:
+                return false;
+        }
+    }
+
+    @Override
     public OrderDto convertToDto(Order order) {
         return modelMapper.map(order, OrderDto.class);
+    }
+
+    @Override
+    public Page<OrderDto> getUserOrdersWithPaging(Long userId, Pageable pageable) {
+        return orderRepository.findByUserId(userId, pageable).map(this::convertToDto);
     }
 
 }

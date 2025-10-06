@@ -11,6 +11,8 @@ import com.ecommerce.sshop.repository.category.ICategoryRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -56,5 +58,10 @@ public class CategoryService implements ICategoryService {
         categoryRepository.findById(id).ifPresentOrElse(categoryRepository::delete, () -> {
             throw new CategoryNotFoundException("Category not found!!");
         });
+    }
+
+    @Override
+    public Page<Category> getAllCategoriesWithPaging(Pageable pageable) {
+        return categoryRepository.findAll(pageable);
     }
 }

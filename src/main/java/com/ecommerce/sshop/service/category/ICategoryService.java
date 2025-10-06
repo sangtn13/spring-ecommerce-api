@@ -4,6 +4,9 @@ import com.ecommerce.sshop.model.category.Category;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface ICategoryService {
     Category getCategoryById(Long id);
 
@@ -16,4 +19,7 @@ public interface ICategoryService {
     Category updateCategory(Category category, Long id);
 
     void deleteCategoryById(Long id);
+
+    Page<Category> getAllCategoriesWithPaging(Pageable pageable);
+
 }

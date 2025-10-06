@@ -1,11 +1,14 @@
 package com.ecommerce.sshop.service.product;
 
+import java.util.List;
+
 import com.ecommerce.sshop.dto.product.ProductDto;
 import com.ecommerce.sshop.model.product.Product;
 import com.ecommerce.sshop.request.products.AddProductRequest;
 import com.ecommerce.sshop.request.products.UpdateProductRequest;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface IProductService {
 
@@ -34,4 +37,13 @@ public interface IProductService {
     List<ProductDto> getConvertedProducts(List<Product> products);
 
     ProductDto convertToDto(Product product);
+
+    // Paging methods
+    Page<ProductDto> getAllProductsWithPaging(Pageable pageable);
+    
+    Page<ProductDto> getProductsByCategoryWithPaging(String category, Pageable pageable);
+    
+    Page<ProductDto> getProductsByBrandWithPaging(String brand, Pageable pageable);
+    
+    Page<ProductDto> searchProductsWithPaging(String keyword, Pageable pageable);
 }
