@@ -37,7 +37,7 @@ chore: update dependencies
 
 ## Release Process
 
-Releases are automatically created when code is pushed to the `main` branch using semantic-release:
+Releases are automatically created when code is pushed to the `master` branch using semantic-release:
 
 1. **Patch** (1.0.1): `fix:` commits
 2. **Minor** (1.1.0): `feat:` commits  
