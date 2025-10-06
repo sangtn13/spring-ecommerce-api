@@ -79,3 +79,14 @@ Thumbs.db
 
 # Docker
 .dockerignore
+
+# Node.js dependencies (for semantic-release)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Semantic release
+CHANGELOG.md
