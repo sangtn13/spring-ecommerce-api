@@ -92,7 +92,7 @@ A simple eCommerce REST API built with Spring Boot, providing essential features
 
 ### 1. Clone repository
 ```bash
-git clone https://github.com/SangTran13/spring-ecommerce-api.git
+git clone https://github.com/sangtn13/spring-ecommerce-api.git
 cd sshop
 ```
 
@@ -332,7 +332,7 @@ This project is distributed under the MIT License. See `LICENSE` file for more i
 
 ## 👨‍💻 Author
 
-**Sang Tran** - [GitHub](https://github.com/SangTran13)
+**Sang Tran** - [GitHub](https://github.com/sangtn13)
 
 ## 📞 Contact
 
