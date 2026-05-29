@@ -79,6 +79,12 @@ Thumbs.db
 
 # Docker
 .dockerignore
+docker-compose.override.yaml
+
+# Local environment files (secrets)
+.env
+.env.*
+!.env.example
 
 # Node.js dependencies (for semantic-release)
 node_modules/

@@ -89,10 +89,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install semantic-release dependencies
+      - name: Install semantic-release dependencies via Yarn
         run: |
-          npm init -y
-          npm install --save-dev semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
+          corepack enable
+          yarn init -2y
+          yarn add --dev semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
 
       - name: Build final artifact
         run: mvn clean package -DskipTests
@@ -105,4 +106,4 @@ jobs:
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: yarn run semantic-release
