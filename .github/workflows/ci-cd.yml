@@ -92,8 +92,7 @@ jobs:
       - name: Install semantic-release dependencies via Yarn
         run: |
           corepack enable
-          yarn init -2y
-          yarn add --dev semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
+          yarn install --no-immutable
 
       - name: Build final artifact
         run: mvn clean package -DskipTests
