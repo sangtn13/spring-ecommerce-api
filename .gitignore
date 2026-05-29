@@ -94,5 +94,3 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
-# Semantic release
-CHANGELOG.md

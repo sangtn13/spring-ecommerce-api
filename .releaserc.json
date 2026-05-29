@@ -21,9 +21,15 @@
       }
     ],
     [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "mvn -q versions:set -DnewVersion=${nextRelease.version} -DgenerateBackupPoms=false"
+      }
+    ],
+    [
       "@semantic-release/git",
       {
-        "assets": ["CHANGELOG.md", "pom.xml"],
+        "assets": ["CHANGELOG.md", "pom.xml", "CONTRIBUTING.md"],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ]
