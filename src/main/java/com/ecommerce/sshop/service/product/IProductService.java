@@ -14,11 +14,11 @@ public interface IProductService {
 
     Product addProduct(AddProductRequest request);
 
-    Product getProductById(Long id);
+    Product getProductById(String id);
 
-    void deleteProduct(Long id);
+    void deleteProduct(String id);
 
-    Product updateProduct(UpdateProductRequest product, Long productId);
+    Product updateProduct(UpdateProductRequest product, String productId);
 
     List<Product> getAllProducts();
 

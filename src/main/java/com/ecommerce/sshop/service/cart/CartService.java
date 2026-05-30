@@ -25,7 +25,7 @@ public class CartService implements ICartService {
     private final ModelMapper modelMapper;
 
     @Override
-    public Cart getCart(Long id) {
+    public Cart getCart(String id) {
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new CartNotFoundException("Cart with id " + id + " not found"));
         BigDecimal totalAmount = cart.getTotalAmount();
@@ -35,7 +35,7 @@ public class CartService implements ICartService {
 
     @Transactional
     @Override
-    public void clearCart(Long id) {
+    public void clearCart(String id) {
         Cart cart = getCart(id);
         cartItemRepository.deleteAllByCartId(id);
         cart.getItems().clear();
@@ -44,7 +44,7 @@ public class CartService implements ICartService {
     }
 
     @Override
-    public BigDecimal getTotalPrice(Long id) {
+    public BigDecimal getTotalPrice(String id) {
         Cart cart = getCart(id);
         return cart.getTotalAmount();
     }
@@ -61,15 +61,15 @@ public class CartService implements ICartService {
     }
 
     @Override
-    public Cart getCartByUserId(Long userId) {
+    public Cart getCartByUserId(String userId) {
         return cartRepository.findByUserId(userId);
     }
 
     @Override
     @Transactional
-    public void clearCartByUserId(Long userId) {
+    public void clearCartByUserId(String userId) {
         Cart cart = getCartByUserId(userId);
-        Long cartId = cart.getId();
+        String cartId = cart.getId();
         cartItemRepository.deleteAllByCartId(cartId);
         cart.getItems().clear();
         cart.setTotalAmount(BigDecimal.ZERO);
@@ -77,7 +77,7 @@ public class CartService implements ICartService {
     }
 
     @Override
-    public BigDecimal getTotalPriceByUserId(Long userId) {
+    public BigDecimal getTotalPriceByUserId(String userId) {
         Cart cart = getCartByUserId(userId);
         return cart.getTotalAmount();
     }

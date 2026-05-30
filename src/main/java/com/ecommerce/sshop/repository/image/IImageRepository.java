@@ -6,6 +6,6 @@ import com.ecommerce.sshop.model.image.Image;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface IImageRepository extends JpaRepository<Image, Long> {
-    List<Image> findByProductId(Long id);
+public interface IImageRepository extends JpaRepository<Image, String> {
+    List<Image> findByProductId(String id);
 }

@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ICategoryService {
-    Category getCategoryById(Long id);
+    Category getCategoryById(String id);
 
     Category getCategoryByName(String name);
 
@@ -16,9 +16,9 @@ public interface ICategoryService {
 
     Category addCategory(Category category);
 
-    Category updateCategory(Category category, Long id);
+    Category updateCategory(Category category, String id);
 
-    void deleteCategoryById(Long id);
+    void deleteCategoryById(String id);
 
     Page<Category> getAllCategoriesWithPaging(Pageable pageable);
 

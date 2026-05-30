@@ -21,8 +21,8 @@ import lombok.Setter;
 @Table(name = "orders")
 public class Order {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
     private LocalDate orderDate;
     private BigDecimal totalAmount;
 

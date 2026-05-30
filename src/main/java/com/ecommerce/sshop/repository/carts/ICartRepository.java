@@ -4,6 +4,6 @@ import com.ecommerce.sshop.model.carts.Cart;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ICartRepository extends JpaRepository<Cart, Long> {
-     Cart findByUserId(Long userId);
+public interface ICartRepository extends JpaRepository<Cart, String> {
+     Cart findByUserId(String userId);
 }

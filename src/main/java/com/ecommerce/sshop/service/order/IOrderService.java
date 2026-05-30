@@ -10,15 +10,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface IOrderService {
-    Order placeOrder(Long userId);
+    Order placeOrder(String userId);
 
-    OrderDto getOrderById(Long orderId);
+    OrderDto getOrderById(String orderId);
 
-    List<OrderDto> getUserOrders(Long userId);
+    List<OrderDto> getUserOrders(String userId);
 
-    Order updateOrderStatus(Long orderId, OrderStatus status);
+    Order updateOrderStatus(String orderId, OrderStatus status);
 
     OrderDto convertToDto(Order order);
 
-    Page<OrderDto> getUserOrdersWithPaging(Long userId, Pageable pageable);
+    Page<OrderDto> getUserOrdersWithPaging(String userId, Pageable pageable);
 }

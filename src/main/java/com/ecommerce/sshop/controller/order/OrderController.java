@@ -35,7 +35,7 @@ public class OrderController {
 
     @PostMapping()
     public ResponseEntity<ApiResponse> createOrder() {
-        Long userId = userService.getCurrentUser().getId();
+        String userId = userService.getCurrentUser().getId();
         Order order = orderService.placeOrder(userId);
         OrderDto orderDto = orderService.convertToDto(order);
         return ResponseEntity.ok(new ApiResponse("Order placed successfully", orderDto));
@@ -43,7 +43,7 @@ public class OrderController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @GetMapping("/{orderId}")
-    public ResponseEntity<ApiResponse> getOrderById(@PathVariable long orderId) {
+    public ResponseEntity<ApiResponse> getOrderById(@PathVariable String orderId) {
         OrderDto order = orderService.getOrderById(orderId);
         if (order != null) {
             return ResponseEntity.ok(new ApiResponse("Order retrieved successfully", order));
@@ -59,7 +59,7 @@ public class OrderController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) {
-        Long userId = userService.getCurrentUser().getId();
+        String userId = userService.getCurrentUser().getId();
         Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
         Page<OrderDto> orders = orderService.getUserOrdersWithPaging(userId, pageable);
         PagedResponse<OrderDto> pagedResponse = PagedResponse.of(orders);
@@ -68,7 +68,7 @@ public class OrderController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @PatchMapping("/{orderId}/status/{status}")
-    public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable Long orderId, @PathVariable String status) {
+    public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable String orderId, @PathVariable String status) {
         if (!EnumUtils.isValidEnum(OrderStatus.class, status.toUpperCase())) {
             throw new StatusInvalidException("Invalid order status: " + status);
         }

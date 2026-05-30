@@ -8,11 +8,11 @@ import com.ecommerce.sshop.model.image.Image;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface IImageService {
-    Image getImageById(Long id);
+    Image getImageById(String id);
 
-    void deleteImageById(Long id);
+    void deleteImageById(String id);
 
-    List<ImageDto> saveImages(List<MultipartFile> file, Long productId);
+    List<ImageDto> saveImages(List<MultipartFile> file, String productId);
 
-    void updateImage(MultipartFile file, Long imageId);
+    void updateImage(MultipartFile file, String imageId);
 }

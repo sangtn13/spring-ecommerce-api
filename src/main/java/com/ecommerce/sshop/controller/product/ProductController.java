@@ -41,7 +41,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> getProductById(@PathVariable String id) {
         Product product = productService.getProductById(id);
         ProductDto convertedProduct = productService.convertToDto(product);
         return ResponseEntity.ok(new ApiResponse("Product retrieved successfully", convertedProduct));
@@ -58,7 +58,7 @@ public class ProductController {
     @PreAuthorize("hasAuthority('Admin')")
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse> updateProduct(@RequestBody UpdateProductRequest request,
-            @PathVariable Long productId) {
+            @PathVariable String productId) {
         Product theProduct = productService.updateProduct(request, productId);
         ProductDto convertedProduct = productService.convertToDto(theProduct);
         return ResponseEntity.ok(new ApiResponse("Product updated successfully", convertedProduct));
@@ -66,7 +66,7 @@ public class ProductController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @DeleteMapping("/{productId}")
-    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) {
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable String productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.ok(new ApiResponse("Product deleted successfully", productId));
     }

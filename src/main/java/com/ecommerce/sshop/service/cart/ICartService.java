@@ -7,19 +7,19 @@ import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.dto.carts.CartDto;
 
 public interface ICartService {
-    Cart getCart(Long id);
+    Cart getCart(String id);
 
-    void clearCart(Long id);
+    void clearCart(String id);
 
-    BigDecimal getTotalPrice(Long id);
+    BigDecimal getTotalPrice(String id);
 
     Cart initializeNewCart(User user);
 
-    Cart getCartByUserId(Long userId);
+    Cart getCartByUserId(String userId);
 
     CartDto convertToDto(Cart cart);
 
-    void clearCartByUserId(Long userId);
+    void clearCartByUserId(String userId);
 
-    BigDecimal getTotalPriceByUserId(Long userId);
+    BigDecimal getTotalPriceByUserId(String userId);
 }

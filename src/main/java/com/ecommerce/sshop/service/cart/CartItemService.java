@@ -24,7 +24,7 @@ public class CartItemService implements ICartItemService {
     private final IProductService productService;
 
     @Override
-    public void addItemToCart(Long cartId, Long productId, int quantity) {
+    public void addItemToCart(String cartId, String productId, int quantity) {
         Cart cart = cartService.getCart(cartId);
         Product product = productService.getProductById(productId);
         CartItem cartItem = cart.getItems().stream().filter(item -> item.getProduct().getId().equals(productId))
@@ -46,7 +46,7 @@ public class CartItemService implements ICartItemService {
     }
 
     @Override
-    public void removeItemFromCart(Long cartId, Long productId) {
+    public void removeItemFromCart(String cartId, String productId) {
         Cart cart = cartService.getCart(cartId);
         CartItem cartItem = getCartItem(cartId, productId);
         if (cartItem != null) {
@@ -56,7 +56,7 @@ public class CartItemService implements ICartItemService {
     }
 
     @Override
-    public void updateItemQuantity(Long cartId, Long productId, int quantity) {
+    public void updateItemQuantity(String cartId, String productId, int quantity) {
         Cart cart = cartService.getCart(cartId);
         cart.getItems().stream().filter(item -> item.getProduct().getId().equals(productId)).findFirst()
                 .ifPresent(cartItem -> {
@@ -71,7 +71,7 @@ public class CartItemService implements ICartItemService {
     }
 
     @Override
-    public CartItem getCartItem(Long cartId, Long productId) {
+    public CartItem getCartItem(String cartId, String productId) {
         Cart cart = cartService.getCart(cartId);
         return cart.getItems().stream().filter(item -> item.getProduct().getId().equals(productId)).findFirst()
                 .orElseThrow(() -> new CartItemNotFoundException("Cart item not found"));

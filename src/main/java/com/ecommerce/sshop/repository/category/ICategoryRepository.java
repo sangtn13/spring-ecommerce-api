@@ -4,7 +4,7 @@ import com.ecommerce.sshop.model.category.Category;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ICategoryRepository extends JpaRepository<Category, Long> {
+public interface ICategoryRepository extends JpaRepository<Category, String> {
     Category findByName(String name);
 
     boolean existsByName(String name);

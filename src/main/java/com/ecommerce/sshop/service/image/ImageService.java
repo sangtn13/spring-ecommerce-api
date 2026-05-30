@@ -26,20 +26,20 @@ public class ImageService implements IImageService {
     private final IProductService productService;
 
     @Override
-    public Image getImageById(Long id) {
+    public Image getImageById(String id) {
         return imageRepository.findById(id)
                 .orElseThrow(() -> new ImageNotFoundException("Image not found with id: !!" + id));
     }
 
     @Override
-    public void deleteImageById(Long id) {
+    public void deleteImageById(String id) {
         imageRepository.findById(id)
                 .ifPresentOrElse(imageRepository::delete,
                         () -> new ImageNotFoundException("Image not found with id: !!" + id));
     }
 
     @Override
-    public List<ImageDto> saveImages(List<MultipartFile> file, Long productId) {
+    public List<ImageDto> saveImages(List<MultipartFile> file, String productId) {
         Product product = productService.getProductById(productId);
         List<ImageDto> savedImageDto = new ArrayList<>();
         for (MultipartFile fileItem : file) {
@@ -77,7 +77,7 @@ public class ImageService implements IImageService {
     }
 
     @Override
-    public void updateImage(MultipartFile file, Long imageId) {
+    public void updateImage(MultipartFile file, String imageId) {
         Image image = getImageById(imageId);
         try {
             image.setFileName(file.getOriginalFilename());
