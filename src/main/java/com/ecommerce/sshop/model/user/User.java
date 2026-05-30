@@ -24,10 +24,15 @@ import lombok.NoArgsConstructor;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "char(36)")
     private String id;
+    @Column(length = 100)
     private String firstName;
+    @Column(length = 100)
     private String lastName;
+    @Column(length = 191, nullable = false, unique = true)
     private String email;
+    @Column(length = 255, nullable = false)
     private String password;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -4,17 +4,18 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import com.ecommerce.sshop.exception.carts.CartNotFoundException;
+import com.ecommerce.sshop.exception.carts.EmptyCartException;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.dto.carts.CartDto;
 import com.ecommerce.sshop.repository.carts.ICartRepository;
 import com.ecommerce.sshop.repository.carts.ICartItemRepository;
+import com.ecommerce.sshop.mapper.CartMapper;
 
 import lombok.RequiredArgsConstructor;
 
 import jakarta.transaction.Transactional;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Service;
 public class CartService implements ICartService {
     private final ICartRepository cartRepository;
     private final ICartItemRepository cartItemRepository;
-    private final ModelMapper modelMapper;
+    private final CartMapper cartMapper;
 
     @Override
     public Cart getCart(String id) {
@@ -51,7 +52,7 @@ public class CartService implements ICartService {
 
     @Override
     public Cart initializeNewCart(User user) {
-        return Optional.ofNullable(getCartByUserId(user.getId()))
+        return Optional.ofNullable(cartRepository.findByUserId(user.getId()))
                 .orElseGet(() -> {
                     Cart newCart = new Cart();
                     newCart.setUser(user);
@@ -62,7 +63,8 @@ public class CartService implements ICartService {
 
     @Override
     public Cart getCartByUserId(String userId) {
-        return cartRepository.findByUserId(userId);
+        return Optional.ofNullable(cartRepository.findByUserId(userId))
+                .orElseThrow(() -> new EmptyCartException("Cart is empty or not created yet"));
     }
 
     @Override
@@ -84,6 +86,6 @@ public class CartService implements ICartService {
 
     @Override
     public CartDto convertToDto(Cart cart) {
-        return modelMapper.map(cart, CartDto.class);
+        return cartMapper.toDto(cart);
     }
 }

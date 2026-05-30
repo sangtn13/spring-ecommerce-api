@@ -18,7 +18,10 @@ import lombok.Setter;
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(columnDefinition = "smallint unsigned")
+    private Short id;
+
+    @Column(length = 50, nullable = false, unique = true)
     private String name;
 
     public Role(String name) {

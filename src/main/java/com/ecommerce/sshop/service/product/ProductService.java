@@ -15,10 +15,11 @@ import com.ecommerce.sshop.repository.image.IImageRepository;
 import com.ecommerce.sshop.repository.product.IProductRepository;
 import com.ecommerce.sshop.request.products.AddProductRequest;
 import com.ecommerce.sshop.request.products.UpdateProductRequest;
+import com.ecommerce.sshop.mapper.ImageMapper;
+import com.ecommerce.sshop.mapper.ProductMapper;
 
 import lombok.RequiredArgsConstructor;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,8 @@ import org.springframework.stereotype.Service;
 public class ProductService implements IProductService {
     private final IProductRepository productRepository;
     private final ICategoryRepository categoryRepository;
-    private final ModelMapper modelMapper;
+    private final ProductMapper productMapper;
+    private final ImageMapper imageMapper;
     private final IImageRepository imageRepository;
 
     @Override
@@ -133,10 +135,10 @@ public class ProductService implements IProductService {
 
     @Override
     public ProductDto convertToDto(Product product) {
-        ProductDto productDto = modelMapper.map(product, ProductDto.class);
+        ProductDto productDto = productMapper.toDto(product);
         List<Image> images = imageRepository.findByProductId(product.getId());
         List<ImageDto> imageDtos = images.stream()
-                .map(image -> modelMapper.map(image, ImageDto.class)).toList();
+            .map(imageMapper::toDto).toList();
         productDto.setImages(imageDtos);
         return productDto;
     }

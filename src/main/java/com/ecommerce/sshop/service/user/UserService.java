@@ -13,10 +13,10 @@ import com.ecommerce.sshop.repository.user.IUserRepository;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.repository.role.IRoleRepository;
 import com.ecommerce.sshop.model.role.Role;
+import com.ecommerce.sshop.mapper.UserMapper;
 
 import lombok.RequiredArgsConstructor;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserService implements IUserService {
     private final IUserRepository userRepository;
-    private final ModelMapper modelMapper;
+    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final IRoleRepository roleRepository;
 
@@ -109,7 +109,7 @@ public class UserService implements IUserService {
 
     @Override
     public UserDto convertUserToDto(User user) {
-        return modelMapper.map(user, UserDto.class);
+        return userMapper.toDto(user);
     }
 
     @Override

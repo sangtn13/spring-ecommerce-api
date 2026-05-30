@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,12 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     private final IRoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${sshop.seed.user.password:}")
+    private String defaultUserPassword;
+
+    @Value("${sshop.seed.admin.password:}")
+    private String defaultAdminPassword;
+
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         createDefaultRolesIfNotExists(Set.of("User", "Admin"));
@@ -33,6 +40,9 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     }
 
     private void createDefaultUserIfNotExists() {
+        if (defaultUserPassword == null || defaultUserPassword.isBlank()) {
+            return;
+        }
         Role userRole = roleRepository.findByName("User").get();
         for (int i = 1; i <= 5; i++) {
             String defaultEmail = "user" + i + "@gmail.com";
@@ -43,13 +53,16 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
             user.setFirstName("Sshop");
             user.setLastName("User" + i);
             user.setEmail(defaultEmail);
-            user.setPassword(passwordEncoder.encode("123456" + i));
+            user.setPassword(passwordEncoder.encode(defaultUserPassword));
             user.setRoles(Set.of(userRole));
             userRepository.save(user);
         }
     }
 
     private void createDefaultAdminIfNotExists() {
+        if (defaultAdminPassword == null || defaultAdminPassword.isBlank()) {
+            return;
+        }
         Role adminRole = roleRepository.findByName("Admin").get();
         String adminEmail = "admin@gmail.com";
         if (userRepository.existsByEmail(adminEmail)) {
@@ -59,7 +72,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
         user.setFirstName("Sshop");
         user.setLastName("Admin");
         user.setEmail(adminEmail);
-        user.setPassword(passwordEncoder.encode("123456"));
+        user.setPassword(passwordEncoder.encode(defaultAdminPassword));
         user.setRoles(Set.of(adminRole));
         userRepository.save(user);
     }
