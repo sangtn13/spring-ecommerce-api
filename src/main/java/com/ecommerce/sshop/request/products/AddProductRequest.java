@@ -8,7 +8,6 @@ import lombok.Data;
 
 @Data
 public class AddProductRequest {
-    private String id;
     private String name;
     private String brand;
     private BigDecimal price;

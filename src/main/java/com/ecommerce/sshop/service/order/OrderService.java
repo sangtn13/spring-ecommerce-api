@@ -18,10 +18,10 @@ import com.ecommerce.sshop.service.cart.ICartService;
 import com.ecommerce.sshop.model.orders.OrderItem;
 import com.ecommerce.sshop.dto.orders.OrderDto;
 import com.ecommerce.sshop.model.product.Product;
+import com.ecommerce.sshop.mapper.OrderMapper;
 
 import lombok.RequiredArgsConstructor;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class OrderService implements IOrderService {
     private final IOrderRepository orderRepository;
     private final IProductRepository productRepository;
     private final ICartService cartService;
-    private final ModelMapper modelMapper;
+    private final OrderMapper orderMapper;
 
     @Override
     @Transactional
@@ -137,7 +137,7 @@ public class OrderService implements IOrderService {
 
     @Override
     public OrderDto convertToDto(Order order) {
-        return modelMapper.map(order, OrderDto.class);
+        return orderMapper.toDto(order);
     }
 
     @Override

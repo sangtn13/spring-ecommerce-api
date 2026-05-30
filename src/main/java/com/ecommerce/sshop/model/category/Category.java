@@ -18,7 +18,9 @@ import lombok.Setter;
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "char(36)")
     private String id;
+    @Column(length = 120, nullable = false, unique = true)
     private String name;
 
     @OneToMany(mappedBy = "category")

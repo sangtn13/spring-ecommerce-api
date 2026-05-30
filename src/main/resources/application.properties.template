@@ -14,6 +14,8 @@ spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
+spring.flyway.locations=classpath:db/migration
+
 # File upload configuration
 spring.servlet.multipart.max-file-size=5MB
 spring.servlet.multipart.max-request-size=5MB
@@ -24,6 +26,10 @@ api.prefix=/api/v1
 # JWT Configuration - GENERATE YOUR OWN SECRET
 sshop.app.jwtSecret=PLEASE_GENERATE_YOUR_OWN_JWT_SECRET_KEY_HERE
 sshop.app.jwtExpirationMs=3600000
+
+# Optional seed passwords (leave empty to skip seeding)
+sshop.seed.user.password=
+sshop.seed.admin.password=
 
 # Swagger Configuration
 springdoc.api-docs.path=/api-docs

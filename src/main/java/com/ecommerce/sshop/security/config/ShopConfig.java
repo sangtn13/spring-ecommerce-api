@@ -2,7 +2,6 @@ package com.ecommerce.sshop.security.config;
 
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
 
 import com.ecommerce.sshop.security.jwt.AuthTokenFilter;
 import com.ecommerce.sshop.security.jwt.JwtAuthEntryPoint;
@@ -36,11 +35,6 @@ public class ShopConfig {
             "/api/v1/cart-items/**", "/api/v1/images/**");
     private static final List<String> UNSECURED_URLS = List.of("/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html",
             "/api-docs/**", "/v3/api-docs/**", "/api/v1/products/**", "/api/v1/categories/**");
-
-    @Bean
-    public ModelMapper modelMapper() {
-        return new ModelMapper();
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

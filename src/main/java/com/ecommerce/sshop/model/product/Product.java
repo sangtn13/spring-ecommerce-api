@@ -19,11 +19,19 @@ import lombok.Setter;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "char(36)")
     private String id;
+    @Column(length = 150, nullable = false)
     private String name;
+    @Column(length = 120)
     private String brand;
+    @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
+    @Column(nullable = false)
     private int inventory;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ManyToOne(cascade = CascadeType.ALL)

@@ -22,11 +22,14 @@ import lombok.Setter;
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "char(36)")
     private String id;
     private LocalDate orderDate;
+    @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
     private OrderStatus orderStatus;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

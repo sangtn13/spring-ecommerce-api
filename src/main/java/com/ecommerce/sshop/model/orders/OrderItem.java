@@ -17,8 +17,11 @@ import lombok.Setter;
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "char(36)")
     private String id;
+    @Column(nullable = false)
     private int quantity;
+    @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
 
     @ManyToOne
