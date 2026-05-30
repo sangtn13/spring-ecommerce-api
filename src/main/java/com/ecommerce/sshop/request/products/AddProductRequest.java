@@ -2,7 +2,6 @@ package com.ecommerce.sshop.request.products;
 
 import java.math.BigDecimal;
 
-import com.ecommerce.sshop.model.category.Category;
 
 import lombok.Data;
 
@@ -13,5 +12,6 @@ public class AddProductRequest {
     private BigDecimal price;
     private int inventory;
     private String description;
-    private Category category;
+    private String categoryId;
+    private String categoryName;
 }

@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.ecommerce.sshop.dto.image.ImageDto;
 import com.ecommerce.sshop.dto.product.ProductDto;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
 import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.model.image.Image;
@@ -41,12 +42,7 @@ public class ProductService implements IProductService {
                     + request.getBrand() + " already exists.");
         }
 
-        Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
-                .orElseGet(() -> {
-                    Category newCategory = new Category(request.getCategory().getName());
-                    return categoryRepository.save(newCategory);
-                });
-        request.setCategory(category);
+        Category category = resolveCategoryForCreate(request);
         return productRepository.save(createProduct(request, category));
     }
 
@@ -88,9 +84,41 @@ public class ProductService implements IProductService {
         existingProduct.setInventory(request.getInventory());
         existingProduct.setDescription(request.getDescription());
 
-        Category category = categoryRepository.findByName(request.getCategory().getName());
-        existingProduct.setCategory(category);
+        Category category = resolveCategoryForUpdate(request);
+        if (category != null) {
+            existingProduct.setCategory(category);
+        }
         return existingProduct;
+    }
+
+    private Category resolveCategoryForCreate(AddProductRequest request) {
+        if (request.getCategoryId() != null && !request.getCategoryId().isBlank()) {
+            return categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found!!"));
+        }
+
+        String categoryName = request.getCategoryName();
+        if (categoryName == null || categoryName.isBlank()) {
+            throw new CategoryNotFoundException("Category name is required");
+        }
+
+        return Optional.ofNullable(categoryRepository.findByName(categoryName))
+                .orElseGet(() -> categoryRepository.save(new Category(categoryName)));
+    }
+
+    private Category resolveCategoryForUpdate(UpdateProductRequest request) {
+        if (request.getCategoryId() != null && !request.getCategoryId().isBlank()) {
+            return categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("Category not found!!"));
+        }
+
+        String categoryName = request.getCategoryName();
+        if (categoryName == null || categoryName.isBlank()) {
+            return null;
+        }
+
+        return Optional.ofNullable(categoryRepository.findByName(categoryName))
+                .orElseGet(() -> categoryRepository.save(new Category(categoryName)));
     }
 
     @Override
