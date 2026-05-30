@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.3...v1.1.4) (2026-05-30)
+
+
+### Bug Fixes
+
+* fix upload file ([3c237a9](https://github.com/SangTran13/spring-ecommerce-api/commit/3c237a9b7bd67ae67b50fcbbf8578b7de34db871))
+
 ## [1.1.3](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.2...v1.1.3) (2026-05-30)
 
 
