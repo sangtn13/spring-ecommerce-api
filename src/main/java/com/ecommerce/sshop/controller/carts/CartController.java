@@ -21,7 +21,7 @@ public class CartController {
     private final ICartService cartService;
     private final IUserService userService;
 
-    @GetMapping("my-cart")
+    @GetMapping("/my-cart")
     public ResponseEntity<ApiResponse> getCart() {
         User user = userService.getCurrentUser();
         Cart cart = cartService.getCartByUserId(user.getId());
