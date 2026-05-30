@@ -1,3 +1,11 @@
+## [1.1.3](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.2...v1.1.3) (2026-05-30)
+
+
+### Bug Fixes
+
+* build fail test ([ba9a770](https://github.com/SangTran13/spring-ecommerce-api/commit/ba9a770240a201a548da05aba4733d9287522fd2))
+* test fail github action ([e823c87](https://github.com/SangTran13/spring-ecommerce-api/commit/e823c873df0f21a40ee90cc71d1b3e87fb1f1e8e))
+
 ## [1.1.2](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.1...v1.1.2) (2026-05-30)
 
 ## [1.1.1](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.0...v1.1.1) (2026-05-29)
