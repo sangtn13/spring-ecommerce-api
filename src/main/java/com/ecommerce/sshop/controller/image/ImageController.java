@@ -27,8 +27,8 @@ public class ImageController {
     private final IImageService imageService;
 
     @PreAuthorize("hasAuthority('Admin')")
-    @PostMapping("/upload")
-    public ResponseEntity<ApiResponse> saveImages(@RequestParam List<MultipartFile> file,
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> saveImages(@RequestPart("files") List<MultipartFile> file,
             @RequestParam String productId) {
         List<ImageDto> imageDtos = imageService.saveImages(file, productId);
         return ResponseEntity.ok(new ApiResponse("Images uploaded successfully", imageDtos));
@@ -46,8 +46,9 @@ public class ImageController {
     }
 
     @PreAuthorize("hasAuthority('Admin')")
-    @PutMapping("/image/{imageId}/update")
-    public ResponseEntity<ApiResponse> updateImage(@PathVariable String imageId, @RequestBody MultipartFile file) {
+    @PutMapping(value = "/image/{imageId}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> updateImage(@PathVariable String imageId,
+            @RequestPart("file") MultipartFile file) {
         Image image = imageService.getImageById(imageId);
         if (image != null) {
             imageService.updateImage(file, imageId);
