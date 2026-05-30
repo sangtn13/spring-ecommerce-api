@@ -27,7 +27,7 @@ public class CartItemController {
     private final IUserService userService;
 
     @PostMapping("/add")
-    public ResponseEntity<ApiResponse> addItemToCart(@RequestParam Long productId,
+    public ResponseEntity<ApiResponse> addItemToCart(@RequestParam String productId,
             @RequestParam Integer quantity) {
         User user = userService.getCurrentUser();
         Cart cart = cartService.initializeNewCart(user);
@@ -36,7 +36,7 @@ public class CartItemController {
     }
 
     @DeleteMapping("/remove/{itemId}")
-    public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable Long itemId) {
+    public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable String itemId) {
         User user = userService.getCurrentUser();
         Cart cart = cartService.getCartByUserId(user.getId());
         cartItemService.removeItemFromCart(cart.getId(), itemId);
@@ -44,7 +44,7 @@ public class CartItemController {
     }
 
     @PutMapping("/update/{itemId}")
-    public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable Long itemId,
+    public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable String itemId,
             @RequestParam Integer quantity) {
         User user = userService.getCurrentUser();
         Cart cart = cartService.getCartByUserId(user.getId());

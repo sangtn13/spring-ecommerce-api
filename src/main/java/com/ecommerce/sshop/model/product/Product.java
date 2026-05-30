@@ -18,8 +18,8 @@ import lombok.Setter;
 @Entity
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
     private String name;
     private String brand;
     private BigDecimal price;

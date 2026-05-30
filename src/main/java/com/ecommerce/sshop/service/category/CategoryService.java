@@ -20,7 +20,7 @@ public class CategoryService implements ICategoryService {
     private final ICategoryRepository categoryRepository;
 
     @Override
-    public Category getCategoryById(Long id) {
+    public Category getCategoryById(String id) {
         return categoryRepository.findById(id).orElseThrow(() -> new CategoryNotFoundException("Category not found!!"));
     }
 
@@ -42,7 +42,7 @@ public class CategoryService implements ICategoryService {
     }
 
     @Override
-    public Category updateCategory(Category category, Long id) {
+    public Category updateCategory(Category category, String id) {
         if (categoryRepository.existsByName(category.getName())
                 && !getCategoryById(id).getName().equals(category.getName())) {
             throw new AlreadyExistsException(category.getName() + " already exists");
@@ -54,7 +54,7 @@ public class CategoryService implements ICategoryService {
     }
 
     @Override
-    public void deleteCategoryById(Long id) {
+    public void deleteCategoryById(String id) {
         categoryRepository.findById(id).ifPresentOrElse(categoryRepository::delete, () -> {
             throw new CategoryNotFoundException("Category not found!!");
         });

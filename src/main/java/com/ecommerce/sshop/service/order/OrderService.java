@@ -37,7 +37,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public Order placeOrder(Long userId) {
+    public Order placeOrder(String userId) {
         Cart cart = cartService.getCartByUserId(userId);
         if (cart.getItems().isEmpty()) {
             throw new EmptyCartException("Cannot place order with an empty cart");
@@ -93,14 +93,14 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public OrderDto getOrderById(Long orderId) {
+    public OrderDto getOrderById(String orderId) {
         return orderRepository.findById(orderId)
                 .map(this::convertToDto)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
     }
 
     @Override
-    public List<OrderDto> getUserOrders(Long userId) {
+    public List<OrderDto> getUserOrders(String userId) {
         return orderRepository.findByUserId(userId).stream()
                 .map(this::convertToDto)
                 .toList();
@@ -108,7 +108,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public Order updateOrderStatus(Long orderId, OrderStatus status) {
+    public Order updateOrderStatus(String orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
         if (!isValidStatusTransition(order.getOrderStatus(), status)) {
@@ -141,7 +141,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Page<OrderDto> getUserOrdersWithPaging(Long userId, Pageable pageable) {
+    public Page<OrderDto> getUserOrdersWithPaging(String userId, Pageable pageable) {
         return orderRepository.findByUserId(userId, pageable).map(this::convertToDto);
     }
 

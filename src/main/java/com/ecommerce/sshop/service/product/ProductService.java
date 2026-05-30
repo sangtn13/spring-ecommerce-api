@@ -54,19 +54,19 @@ public class ProductService implements IProductService {
     }
 
     @Override
-    public Product getProductById(Long id) {
+    public Product getProductById(String id) {
         return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException("Product not found!!"));
     }
 
     @Override
-    public void deleteProduct(Long id) {
+    public void deleteProduct(String id) {
         productRepository.findById(id).ifPresentOrElse(productRepository::delete, () -> {
             throw new ProductNotFoundException("Product not found!!");
         });
     }
 
     @Override
-    public Product updateProduct(UpdateProductRequest product, Long productId) {
+    public Product updateProduct(UpdateProductRequest product, String productId) {
 
         if (isProductExist(product.getName(), product.getBrand())
                 && !getProductById(productId).getName().equals(product.getName())) {

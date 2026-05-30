@@ -8,8 +8,8 @@ import lombok.Data;
 
 @Data
 public class OrderDto {
-    private Long id;
-    private Long userId;
+    private String id;
+    private String userId;
     private LocalDate orderDate;
     private BigDecimal totalAmount;
     private String status;

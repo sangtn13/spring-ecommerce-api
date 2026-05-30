@@ -20,8 +20,8 @@ import lombok.Setter;
 @Entity
 public class Cart {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -47,10 +47,8 @@ public class Cart {
         this.totalAmount = items.stream()
                 .map(item -> {
                     BigDecimal unitPrice = item.getUnitPrice();
-                    if (unitPrice == null) {
-                        unitPrice = BigDecimal.ZERO;
-                    }
-                    return unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+                    return (unitPrice == null ? BigDecimal.ZERO : unitPrice)
+                            .multiply(BigDecimal.valueOf(item.getQuantity()));
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

@@ -8,15 +8,15 @@ import com.ecommerce.sshop.request.users.UpdateUserRequest;
 
 public interface IUserService {
 
-    User getUserById(Long userId);
+    User getUserById(String userId);
 
     User createUser(CreateUserRequest request);
 
     User createUserWithRole(CreateUserWithRoleRequest request);
 
-    User updateUser(UpdateUserRequest request, Long userId);
+    User updateUser(UpdateUserRequest request, String userId);
 
-    void deleteUser(Long userId);
+    void deleteUser(String userId);
 
     UserDto convertUserToDto(User user);
 

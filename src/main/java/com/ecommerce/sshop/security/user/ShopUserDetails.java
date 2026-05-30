@@ -20,7 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShopUserDetails implements UserDetails {
-    private Long id;
+    private String id;
     private String email;
     private String password;
 

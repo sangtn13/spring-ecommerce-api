@@ -35,7 +35,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse> getUserById(@PathVariable String userId) {
         User user = userService.getUserById(userId);
         UserDto userDto = userService.convertUserToDto(user);
         if (user != null) {
@@ -55,7 +55,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @PutMapping("/{userId}")
-    public ResponseEntity<ApiResponse> updateUser(@PathVariable Long userId, @RequestBody UpdateUserRequest user) {
+    public ResponseEntity<ApiResponse> updateUser(@PathVariable String userId, @RequestBody UpdateUserRequest user) {
         User updatedUser = userService.updateUser(user, userId);
         if (updatedUser != null) {
             UserDto userDto = userService.convertUserToDto(updatedUser);
@@ -67,7 +67,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse> deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
         return ResponseEntity.ok(new ApiResponse("User deleted successfully", null));
     }

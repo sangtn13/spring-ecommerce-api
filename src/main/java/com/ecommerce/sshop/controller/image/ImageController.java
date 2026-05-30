@@ -29,14 +29,14 @@ public class ImageController {
     @PreAuthorize("hasAuthority('Admin')")
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse> saveImages(@RequestParam List<MultipartFile> file,
-            @RequestParam Long productId) {
+            @RequestParam String productId) {
         List<ImageDto> imageDtos = imageService.saveImages(file, productId);
         return ResponseEntity.ok(new ApiResponse("Images uploaded successfully", imageDtos));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
     @GetMapping("/download/{imageId}")
-    public ResponseEntity<Resource> downloadImage(@PathVariable Long imageId) throws SQLException {
+    public ResponseEntity<Resource> downloadImage(@PathVariable String imageId) throws SQLException {
         Image image = imageService.getImageById(imageId);
         ByteArrayResource resource = new ByteArrayResource(
                 image.getImage().getBytes(1, (int) image.getImage().length()));
@@ -47,7 +47,7 @@ public class ImageController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @PutMapping("/image/{imageId}/update")
-    public ResponseEntity<ApiResponse> updateImage(@PathVariable long imageId, @RequestBody MultipartFile file) {
+    public ResponseEntity<ApiResponse> updateImage(@PathVariable String imageId, @RequestBody MultipartFile file) {
         Image image = imageService.getImageById(imageId);
         if (image != null) {
             imageService.updateImage(file, imageId);
@@ -59,7 +59,7 @@ public class ImageController {
 
     @PreAuthorize("hasAuthority('Admin')")
     @DeleteMapping("/image/{imageId}/delete")
-    public ResponseEntity<ApiResponse> deleteImage(@PathVariable long imageId) {
+    public ResponseEntity<ApiResponse> deleteImage(@PathVariable String imageId) {
         Image image = imageService.getImageById(imageId);
         if (image != null) {
             imageService.deleteImageById(imageId);

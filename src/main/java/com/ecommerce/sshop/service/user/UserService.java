@@ -31,7 +31,7 @@ public class UserService implements IUserService {
     private final IRoleRepository roleRepository;
 
     @Override
-    public User getUserById(Long userId) {
+    public User getUserById(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
     }
@@ -85,7 +85,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User updateUser(UpdateUserRequest request, Long userId) {
+    public User updateUser(UpdateUserRequest request, String userId) {
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
 
@@ -100,7 +100,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void deleteUser(Long userId) {
+    public void deleteUser(String userId) {
         userRepository.findById(userId)
                 .ifPresentOrElse(userRepository::delete, () -> {
                     throw new UserNotFoundException("User not found with id: " + userId);

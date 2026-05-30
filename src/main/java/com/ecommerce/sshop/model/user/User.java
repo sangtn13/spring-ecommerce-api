@@ -23,8 +23,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "`user`")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
     private String firstName;
     private String lastName;
     private String email;
