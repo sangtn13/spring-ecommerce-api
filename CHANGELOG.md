@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.5...v1.2.0) (2026-05-31)
+
+
+### Features
+
+* implement payOS payment ([a622514](https://github.com/SangTran13/spring-ecommerce-api/commit/a622514ff93f0870a3faf2c81f6a0b53b41436ff))
+
 ## [1.1.5](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.4...v1.1.5) (2026-05-30)
 
 ## [1.1.4](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.3...v1.1.4) (2026-05-30)
