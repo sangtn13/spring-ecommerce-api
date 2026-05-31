@@ -77,7 +77,7 @@ public class PaymentService implements IPaymentService {
         String returnUrl = returnUrlBase + "?orderId=" + orderId;
         String cancelUrl = cancelUrlBase + "?orderId=" + orderId;
 
-        long orderCode = Math.abs((long) orderId.hashCode());
+        long orderCode = orderId.hashCode() & 0xFFFFFFFFL;
 
         CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
             .orderCode(orderCode)
