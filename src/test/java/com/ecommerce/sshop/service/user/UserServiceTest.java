@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
-import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.mapper.UserMapper;
 import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.model.user.User;

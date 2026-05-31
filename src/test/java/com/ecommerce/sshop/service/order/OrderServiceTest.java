@@ -12,7 +12,6 @@ import java.util.Set;
 import com.ecommerce.sshop.enums.OrderStatus;
 import com.ecommerce.sshop.exception.carts.EmptyCartException;
 import com.ecommerce.sshop.exception.order.InsufficientStockException;
-import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.exception.order.StatusInvalidException;
 import com.ecommerce.sshop.mapper.OrderMapper;
 import com.ecommerce.sshop.model.carts.Cart;
