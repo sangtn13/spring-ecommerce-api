@@ -50,8 +50,8 @@ public class ImageController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(fileType))
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-            .body(resource);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .body(resource);
     }
 
     @PreAuthorize("hasAuthority('Admin')")
@@ -60,8 +60,8 @@ public class ImageController {
             @RequestPart("file") MultipartFile file) {
         Image image = imageService.getImageById(imageId);
         if (image != null) {
-            imageService.updateImage(file, imageId);
-            return ResponseEntity.ok(new ApiResponse("Image updated successfully", image));
+            ImageDto updatedImageDto = imageService.updateImage(file, imageId);
+            return ResponseEntity.ok(new ApiResponse("Image updated successfully", updatedImageDto));
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ApiResponse("Update failed!", HttpStatus.INTERNAL_SERVER_ERROR));

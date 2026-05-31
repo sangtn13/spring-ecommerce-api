@@ -1,6 +1,7 @@
 package com.ecommerce.sshop.service.image;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
@@ -24,10 +25,13 @@ import org.springframework.mock.web.MockMultipartFile;
 @ExtendWith(MockitoExtension.class)
 class ImageServiceTest {
 
-    @Mock private IImageRepository imageRepository;
-    @Mock private IProductService productService;
+    @Mock
+    private IImageRepository imageRepository;
+    @Mock
+    private IProductService productService;
 
-    @InjectMocks private ImageService imageService;
+    @InjectMocks
+    private ImageService imageService;
 
     private final String imageId = "img-123";
 
@@ -60,8 +64,7 @@ class ImageServiceTest {
         mockProduct.setId(productId);
 
         MockMultipartFile file = new MockMultipartFile(
-                "files", "avatar.png", "image/png", "bytes-data".getBytes()
-        );
+                "files", "avatar.png", "image/png", "bytes-data".getBytes());
 
         when(productService.getProductById(productId)).thenReturn(mockProduct);
         when(imageRepository.save(any(Image.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -76,14 +79,26 @@ class ImageServiceTest {
     @Test
     @DisplayName("Update image binary data successfully")
     void updateImage_Success() {
+        // Arrange
         Image mockImage = new Image();
         mockImage.setId(imageId);
+        mockImage.setFileName("old.png");
+        mockImage.setDownloadUrl("/api/v1/images/image/download/" + imageId);
+
         MockMultipartFile file = new MockMultipartFile("file", "new.png", "image/png", "new-bytes".getBytes());
 
         when(imageRepository.findById(imageId)).thenReturn(Optional.of(mockImage));
         when(imageRepository.save(any(Image.class))).thenReturn(mockImage);
 
-        assertDoesNotThrow(() -> imageService.updateImage(file, imageId));
+        // Act
+        ImageDto result = imageService.updateImage(file, imageId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(imageId, result.getId());
+        assertEquals("new.png", result.getFileName());
+        assertEquals(mockImage.getDownloadUrl(), result.getDownloadUrl());
+
         verify(imageRepository).save(mockImage);
     }
 }

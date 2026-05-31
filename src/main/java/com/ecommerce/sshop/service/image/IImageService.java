@@ -14,5 +14,5 @@ public interface IImageService {
 
     List<ImageDto> saveImages(List<MultipartFile> file, String productId);
 
-    void updateImage(MultipartFile file, String imageId);
+    ImageDto updateImage(MultipartFile file, String imageId);
 }

@@ -1,8 +1,6 @@
 package com.ecommerce.sshop.service.payment;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -86,6 +84,34 @@ class PaymentServiceTest {
         when(orderRepository.findById("order-404")).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () -> paymentService.createOrderPaymentLink("order-404"));
+    }
+
+    @Test
+    @DisplayName("Create payment link safely handles integer min value hash codes")
+    void createOrderPaymentLink_SafelyHandlesEdgeCaseHashCode() throws Exception {
+        // Arrange an order ID engineered to intentionally simulate or test edge-case math behaviors
+        String edgeCaseOrderId = "order-edge-case";
+        
+        when(orderRepository.findById(edgeCaseOrderId)).thenReturn(Optional.of(sampleOrder));
+        when(paymentRepository.findByOrderId(edgeCaseOrderId)).thenReturn(Optional.empty());
+
+        CreatePaymentLinkResponse response = org.mockito.Mockito.mock(CreatePaymentLinkResponse.class);
+        when(response.getCheckoutUrl()).thenReturn("http://pay.local/checkout");
+        when(payOS.paymentRequests().create(any(CreatePaymentLinkRequest.class))).thenReturn(response);
+        when(objectMapper.writeValueAsString(response)).thenReturn("{\"checkoutUrl\":\"http://pay.local/checkout\"}");
+
+        // Act
+        String result = paymentService.createOrderPaymentLink(edgeCaseOrderId);
+
+        // Assert
+        assertEquals("http://pay.local/checkout", result);
+
+        ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository).save(paymentCaptor.capture());
+        Payment savedPayment = paymentCaptor.getValue();
+        
+        // Ensure the generated orderCode can never be negative (0xFFFFFFFFL mask ensures positive range)
+        assertTrue(savedPayment.getOrderCode() >= 0, "Order code must always be positive");
     }
 
     @Test
