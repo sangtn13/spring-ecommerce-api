@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.2.0...v1.2.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* update image - type definition error ([cce7b68](https://github.com/SangTran13/spring-ecommerce-api/commit/cce7b68576c720f0bf5e0e5ecf623e0be1d501cc))
+
 # [1.2.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.1.5...v1.2.0) (2026-05-31)
 
 
