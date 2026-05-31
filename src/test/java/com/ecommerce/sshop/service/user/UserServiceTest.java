@@ -12,13 +12,16 @@ import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.repository.role.IRoleRepository;
 import com.ecommerce.sshop.repository.user.IUserRepository;
+import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.request.users.CreateUserRequest;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
+import com.ecommerce.sshop.exception.user.UserNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -140,5 +143,79 @@ class UserServiceTest {
 
         assertNotNull(result);
         assertEquals(email, result.getEmail());
+    }
+
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void getUserById_SuccessAndNotFound() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(sampleUser));
+        assertEquals(sampleUser, userService.getUserById(userId));
+
+        when(userRepository.findById("missing")).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> userService.getUserById("missing"));
+    }
+
+    @Test
+    void createUser_RoleNotFound_ThrowsRuntimeException() {
+        CreateUserRequest request = new CreateUserRequest();
+        request.setEmail(email);
+        request.setPassword("x");
+        when(userRepository.existsByEmail(email)).thenReturn(false);
+        when(roleRepository.findByName("User")).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> userService.createUser(request));
+    }
+
+    @Test
+    void createUserWithRole_DefaultsToUser_WhenInvalidRole() {
+        CreateUserWithRoleRequest request = new CreateUserWithRoleRequest();
+        request.setEmail("u2@gmail.com");
+        request.setPassword("pw");
+        request.setRole("UnknownRole");
+
+        when(userRepository.existsByEmail("u2@gmail.com")).thenReturn(false);
+        when(passwordEncoder.encode("pw")).thenReturn("encoded");
+        when(roleRepository.findByName("User")).thenReturn(Optional.of(userRole));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.createUserWithRole(request);
+        assertTrue(result.getRoles().stream().anyMatch(r -> r.getName().equals("User")));
+    }
+
+    @Test
+    void createUserWithRole_EmailExists_Throws() {
+        CreateUserWithRoleRequest request = new CreateUserWithRoleRequest();
+        request.setEmail(email);
+        when(userRepository.existsByEmail(email)).thenReturn(true);
+        assertThrows(AlreadyExistsException.class, () -> userService.createUserWithRole(request));
+    }
+
+    @Test
+    void deleteUser_SuccessAndNotFound() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(sampleUser));
+        assertDoesNotThrow(() -> userService.deleteUser(userId));
+        verify(userRepository).delete(sampleUser);
+
+        when(userRepository.findById("missing")).thenReturn(Optional.empty());
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser("missing"));
+    }
+
+    @Test
+    void convertUserToDto_AndGetCurrentUserNotFound() {
+        UserDto dto = new UserDto();
+        when(userMapper.toDto(sampleUser)).thenReturn(dto);
+        assertEquals(dto, userService.convertUserToDto(sampleUser));
+
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(authentication.getName()).thenReturn("missing@gmail.com");
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByEmail("missing@gmail.com")).thenReturn(null);
+
+        assertThrows(UserNotFoundException.class, () -> userService.getCurrentUser());
     }
 }

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.repository.order.IOrderRepository;
 import com.ecommerce.sshop.repository.product.IProductRepository;
 import com.ecommerce.sshop.service.cart.ICartService;
+import com.ecommerce.sshop.dto.orders.OrderDto;
+import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -127,5 +132,59 @@ class OrderServiceTest {
         assertThrows(StatusInvalidException.class, () -> 
             orderService.updateOrderStatus(orderId, OrderStatus.CANCELED)
         );
+    }
+
+    @Test
+    void getOrderById_Success_And_NotFound() {
+        OrderDto dto = new OrderDto();
+        Order order = new Order();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderMapper.toDto(order)).thenReturn(dto);
+        assertEquals(dto, orderService.getOrderById(orderId));
+
+        when(orderRepository.findById("missing")).thenReturn(Optional.empty());
+        assertThrows(OrderNotFoundException.class, () -> orderService.getOrderById("missing"));
+    }
+
+    @Test
+    void getUserOrders_ConvertToDto() {
+        Order order = new Order();
+        OrderDto dto = new OrderDto();
+        when(orderRepository.findByUserId(userId)).thenReturn(List.of(order));
+        when(orderMapper.toDto(order)).thenReturn(dto);
+        List<OrderDto> result = orderService.getUserOrders(userId);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void updateOrderStatus_NotFound_ThrowsException() {
+        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+        assertThrows(OrderNotFoundException.class, () -> orderService.updateOrderStatus(orderId, OrderStatus.PROCESSING));
+    }
+
+    @Test
+    void updateOrderStatus_AdditionalValidTransitions() {
+        Order order = new Order();
+        order.setOrderStatus(OrderStatus.PROCESSING);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertEquals(OrderStatus.SHIPPED, orderService.updateOrderStatus(orderId, OrderStatus.SHIPPED).getOrderStatus());
+
+        Order shipped = new Order();
+        shipped.setOrderStatus(OrderStatus.SHIPPED);
+        when(orderRepository.findById("order-2")).thenReturn(Optional.of(shipped));
+        assertEquals(OrderStatus.DELIVERED, orderService.updateOrderStatus("order-2", OrderStatus.DELIVERED).getOrderStatus());
+    }
+
+    @Test
+    void convertToDto_And_GetUserOrdersWithPaging() {
+        Order order = new Order();
+        OrderDto dto = new OrderDto();
+        when(orderMapper.toDto(order)).thenReturn(dto);
+        assertEquals(dto, orderService.convertToDto(order));
+
+        var pageable = PageRequest.of(0, 2);
+        when(orderRepository.findByUserId(userId, pageable)).thenReturn(new PageImpl<>(List.of(order)));
+        assertEquals(1, orderService.getUserOrdersWithPaging(userId, pageable).getContent().size());
     }
 }

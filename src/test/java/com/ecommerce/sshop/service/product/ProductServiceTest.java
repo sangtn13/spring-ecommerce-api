@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.ecommerce.sshop.dto.product.ProductDto;
+import com.ecommerce.sshop.dto.image.ImageDto;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
 import com.ecommerce.sshop.mapper.ImageMapper;
 import com.ecommerce.sshop.mapper.ProductMapper;
 import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.model.image.Image;
 import com.ecommerce.sshop.model.product.Product;
 import com.ecommerce.sshop.repository.category.ICategoryRepository;
 import com.ecommerce.sshop.repository.image.IImageRepository;
@@ -169,6 +171,107 @@ class ProductServiceTest {
 
         assertDoesNotThrow(() -> productService.deleteProduct(productId));
         verify(productRepository).delete(sampleProduct);
+    }
+
+    @Test
+    void deleteProduct_NotFound_ThrowsException() {
+        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+        assertThrows(ProductNotFoundException.class, () -> productService.deleteProduct(productId));
+    }
+
+    @Test
+    void updateProduct_AlreadyExists_ThrowsException() {
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setName("Another Product");
+        request.setBrand("Apple");
+
+        Product current = new Product();
+        current.setName("Old Name");
+
+        when(productRepository.existsByNameAndBrand("Another Product", "Apple")).thenReturn(true);
+        when(productRepository.findById(productId)).thenReturn(Optional.of(current));
+
+        assertThrows(AlreadyExistsException.class, () -> productService.updateProduct(request, productId));
+    }
+
+    @Test
+    void updateProduct_NotFound_ThrowsException() {
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setName("iPhone");
+        request.setBrand("Apple");
+
+        when(productRepository.existsByNameAndBrand("iPhone", "Apple")).thenReturn(false);
+        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> productService.updateProduct(request, productId));
+    }
+
+    @Test
+    void addProduct_CategoryIdNotFound_ThrowsException() {
+        AddProductRequest request = new AddProductRequest();
+        request.setName("n");
+        request.setBrand("b");
+        request.setCategoryId("missing-id");
+
+        when(productRepository.existsByNameAndBrand("n", "b")).thenReturn(false);
+        when(categoryRepository.findById("missing-id")).thenReturn(Optional.empty());
+
+        assertThrows(CategoryNotFoundException.class, () -> productService.addProduct(request));
+    }
+
+    @Test
+    void getAllAndFilterMethods_DelegateToRepository() {
+        when(productRepository.findAll()).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByCategoryName("Electronics")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByBrand("Apple")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByCategoryNameAndBrand("Electronics", "Apple")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByName("iPhone 15")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByBrandAndName("Apple", "iPhone 15")).thenReturn(List.of(sampleProduct));
+        when(productRepository.countByBrandAndName("Apple", "iPhone 15")).thenReturn(1L);
+
+        assertEquals(1, productService.getAllProducts().size());
+        assertEquals(1, productService.getProductsByCategory("Electronics").size());
+        assertEquals(1, productService.getProductsByBrand("Apple").size());
+        assertEquals(1, productService.getProductsByCategoryAndBrand("Electronics", "Apple").size());
+        assertEquals(1, productService.getProductsByName("iPhone 15").size());
+        assertEquals(1, productService.getProductsByBrandAndName("Apple", "iPhone 15").size());
+        assertEquals(1L, productService.countProductsByBrandAndName("Apple", "iPhone 15"));
+    }
+
+    @Test
+    void convertToDto_SetsImages() {
+        ProductDto dto = new ProductDto();
+        Image image = new Image();
+        ImageDto imageDto = new ImageDto();
+
+        when(productMapper.toDto(sampleProduct)).thenReturn(dto);
+        when(imageRepository.findByProductId(productId)).thenReturn(List.of(image));
+        when(imageMapper.toDto(image)).thenReturn(imageDto);
+
+        ProductDto result = productService.convertToDto(sampleProduct);
+
+        assertNotNull(result.getImages());
+        assertEquals(1, result.getImages().size());
+    }
+
+    @Test
+    void convertedProductsAndPagingMethods_Success() {
+        ProductDto dto = new ProductDto();
+        when(productMapper.toDto(sampleProduct)).thenReturn(dto);
+        when(imageRepository.findByProductId(productId)).thenReturn(List.of());
+
+        List<ProductDto> converted = productService.getConvertedProducts(List.of(sampleProduct));
+        assertEquals(1, converted.size());
+
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Product> page = new PageImpl<>(List.of(sampleProduct));
+        when(productRepository.findAll(pageable)).thenReturn(page);
+        when(productRepository.findByCategoryName("Electronics", pageable)).thenReturn(page);
+        when(productRepository.findByBrand("Apple", pageable)).thenReturn(page);
+
+        assertEquals(1, productService.getAllProductsWithPaging(pageable).getContent().size());
+        assertEquals(1, productService.getProductsByCategoryWithPaging("Electronics", pageable).getContent().size());
+        assertEquals(1, productService.getProductsByBrandWithPaging("Apple", pageable).getContent().size());
     }
 
     @Test

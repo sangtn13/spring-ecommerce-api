@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.ecommerce.sshop.exception.carts.CartNotFoundException;
 import com.ecommerce.sshop.exception.carts.EmptyCartException;
+import com.ecommerce.sshop.dto.carts.CartDto;
 import com.ecommerce.sshop.mapper.CartMapper;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.user.User;
@@ -105,5 +106,44 @@ class CartServiceTest {
         when(cartRepository.findByUserId(userId)).thenReturn(null);
 
         assertThrows(EmptyCartException.class, () -> cartService.getCartByUserId(userId));
+    }
+
+    @Test
+    void getTotalPrice_Success() {
+        when(cartRepository.findById(cartId)).thenReturn(Optional.of(sampleCart));
+        when(cartRepository.save(any(Cart.class))).thenReturn(sampleCart);
+        assertEquals(BigDecimal.ZERO, cartService.getTotalPrice(cartId));
+    }
+
+    @Test
+    void clearCart_Success() {
+        when(cartRepository.findById(cartId)).thenReturn(Optional.of(sampleCart));
+        when(cartRepository.save(any(Cart.class))).thenReturn(sampleCart);
+
+        cartService.clearCart(cartId);
+
+        verify(cartItemRepository).deleteAllByCartId(cartId);
+        verify(cartRepository).deleteById(cartId);
+    }
+
+    @Test
+    void initializeNewCart_ReturnExistingCart() {
+        when(cartRepository.findByUserId(userId)).thenReturn(sampleCart);
+        Cart result = cartService.initializeNewCart(sampleUser);
+        assertEquals(sampleCart, result);
+        verify(cartRepository, never()).save(any(Cart.class));
+    }
+
+    @Test
+    void getTotalPriceByUserId_Success() {
+        when(cartRepository.findByUserId(userId)).thenReturn(sampleCart);
+        assertEquals(BigDecimal.ZERO, cartService.getTotalPriceByUserId(userId));
+    }
+
+    @Test
+    void convertToDto_Success() {
+        CartDto dto = new CartDto();
+        when(cartMapper.toDto(sampleCart)).thenReturn(dto);
+        assertEquals(dto, cartService.convertToDto(sampleCart));
     }
 }

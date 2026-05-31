@@ -103,4 +103,28 @@ class CartItemServiceTest {
 
         assertThrows(CartItemNotFoundException.class, () -> cartItemService.getCartItem(cartId, productId));
     }
+
+    @Test
+    void addItemToCart_ExistingItem_IncreaseQuantity() {
+        sampleCart.addItem(sampleCartItem);
+        when(cartService.getCart(cartId)).thenReturn(sampleCart);
+        when(productService.getProductById(productId)).thenReturn(sampleProduct);
+
+        cartItemService.addItemToCart(cartId, productId, 2);
+
+        assertEquals(3, sampleCartItem.getQuantity());
+        verify(cartItemRepository).save(sampleCartItem);
+    }
+
+    @Test
+    void updateItemQuantity_Success() {
+        sampleCart.addItem(sampleCartItem);
+        when(cartService.getCart(cartId)).thenReturn(sampleCart);
+
+        cartItemService.updateItemQuantity(cartId, productId, 4);
+
+        assertEquals(4, sampleCartItem.getQuantity());
+        assertEquals(new BigDecimal("800.00"), sampleCartItem.getTotalPrice());
+        verify(cartRepository).save(sampleCart);
+    }
 }
