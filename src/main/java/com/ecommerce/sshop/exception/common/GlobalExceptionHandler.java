@@ -4,6 +4,8 @@ import com.ecommerce.sshop.exception.carts.CartNotFoundException;
 import com.ecommerce.sshop.exception.carts.QuantityInvalidException;
 import com.ecommerce.sshop.exception.carts.EmptyCartException;
 import com.ecommerce.sshop.exception.order.OrderNotFoundException;
+import com.ecommerce.sshop.exception.order.OrderNotPendingException;
+import com.ecommerce.sshop.exception.order.OrderHasBeenPaidException;
 import com.ecommerce.sshop.exception.order.StatusInvalidException;
 import com.ecommerce.sshop.exception.order.InsufficientStockException;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
@@ -32,6 +34,8 @@ public class GlobalExceptionHandler {
             InsufficientStockException.class,
             EmptyCartException.class,
             StatusInvalidException.class,
+            OrderNotPendingException.class,
+            OrderHasBeenPaidException.class
     })
     public ResponseEntity<ApiResponse> handleBadRequestException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

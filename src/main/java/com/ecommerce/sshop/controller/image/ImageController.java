@@ -2,6 +2,7 @@ package com.ecommerce.sshop.controller.image;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 import com.ecommerce.sshop.dto.image.ImageDto;
 import com.ecommerce.sshop.model.image.Image;
@@ -38,11 +39,19 @@ public class ImageController {
     @GetMapping("/download/{imageId}")
     public ResponseEntity<Resource> downloadImage(@PathVariable String imageId) throws SQLException {
         Image image = imageService.getImageById(imageId);
-        ByteArrayResource resource = new ByteArrayResource(
-                image.getImage().getBytes(1, (int) image.getImage().length()));
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType(image.getFileType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + image.getFileName() + "\"")
-                .body(resource);
+        if (image.getImage() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        byte[] imageBytes = image.getImage().getBytes(1, (int) image.getImage().length());
+        ByteArrayResource resource = new ByteArrayResource(Objects.requireNonNull(imageBytes, "Image data is null"));
+        String fileType = image.getFileType();
+        String fileName = image.getFileName();
+        if (fileType == null || fileName == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType(fileType))
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+            .body(resource);
     }
 
     @PreAuthorize("hasAuthority('Admin')")

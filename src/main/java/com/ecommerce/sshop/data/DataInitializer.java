@@ -8,11 +8,11 @@ import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.model.user.User;
 
 import jakarta.transaction.Transactional;
-
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.lang.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     private String defaultAdminPassword;
 
     @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
+    public void onApplicationEvent(@Nullable ApplicationReadyEvent event) {
         createDefaultRolesIfNotExists(Set.of("User", "Admin"));
         createDefaultUserIfNotExists();
         createDefaultAdminIfNotExists();
