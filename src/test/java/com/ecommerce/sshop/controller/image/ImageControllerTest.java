@@ -1,6 +1,7 @@
 package com.ecommerce.sshop.controller.image;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.Blob;
@@ -67,16 +68,30 @@ class ImageControllerTest {
     @Test
     @DisplayName("Update image successfully (Admin)")
     void updateImage_Success() {
+        // 1. Arrange mock entities and DTO response structures
         Image mockImage = new Image();
         MockMultipartFile file = new MockMultipartFile("file", "update.jpg", "image/jpeg", "new-data".getBytes());
         
-        when(imageService.getImageById(imageId)).thenReturn(mockImage);
-        doNothing().when(imageService).updateImage(file, imageId);
+        ImageDto mockImageDto = new ImageDto();
+        mockImageDto.setId(imageId);
+        mockImageDto.setFileName("update.jpg");
+        mockImageDto.setDownloadUrl("/api/v1/images/image/download/" + imageId);
 
+        when(imageService.getImageById(imageId)).thenReturn(mockImage);
+        // Replace doNothing() with when().thenReturn() to support the new ImageDto return type
+        when(imageService.updateImage(file, imageId)).thenReturn(mockImageDto);
+
+        // 2. Act
         ResponseEntity<ApiResponse> response = imageController.updateImage(imageId, file);
 
+        // 3. Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Image updated successfully", response.getBody().getMessage());
+        
+        // Optional verification to verify data object matches expected DTO payload
+        assertNotNull(response.getBody().getData());
+        ImageDto resultData = (ImageDto) response.getBody().getData();
+        assertEquals("update.jpg", resultData.getFileName());
     }
 
     @Test
