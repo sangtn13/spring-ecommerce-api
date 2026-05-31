@@ -34,7 +34,7 @@ public class ShopConfig {
             "/api/v1/carts/**",
             "/api/v1/cart-items/**", "/api/v1/images/**");
     private static final List<String> UNSECURED_URLS = List.of("/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html",
-            "/api-docs/**", "/v3/api-docs/**", "/api/v1/products/**", "/api/v1/categories/**");
+            "/api-docs/**", "/v3/api-docs/**", "/api/v1/products/**", "/api/v1/categories/**", "/api/v1/payments/payos-webhook");
 
     @Bean
     public PasswordEncoder passwordEncoder() {

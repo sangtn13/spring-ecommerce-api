@@ -31,6 +31,13 @@ sshop.app.jwtExpirationMs=3600000
 sshop.seed.user.password=
 sshop.seed.admin.password=
 
+# PayOS Integration
+payos.client-id=
+payos.api-key=
+payos.checksum-key=
+payos.return-url-base=
+payos.cancel-url-base=
+
 # Swagger Configuration
 springdoc.api-docs.path=/api-docs
 springdoc.swagger-ui.path=/swagger-ui.html
