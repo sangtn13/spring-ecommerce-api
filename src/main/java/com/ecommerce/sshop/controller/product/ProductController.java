@@ -47,7 +47,7 @@ public class ProductController {
         return ResponseEntity.ok(new ApiResponse("Product retrieved successfully", convertedProduct));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PostMapping()
     public ResponseEntity<ApiResponse> addProduct(@RequestBody AddProductRequest product) {
         Product theProduct = productService.addProduct(product);
@@ -55,7 +55,7 @@ public class ProductController {
         return ResponseEntity.ok(new ApiResponse("Product added successfully", convertedProduct));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse> updateProduct(@RequestBody UpdateProductRequest request,
             @PathVariable String productId) {
@@ -64,7 +64,7 @@ public class ProductController {
         return ResponseEntity.ok(new ApiResponse("Product updated successfully", convertedProduct));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @DeleteMapping("/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable String productId) {
         productService.deleteProduct(productId);
@@ -165,7 +165,7 @@ public class ProductController {
         return ResponseEntity.ok(new ApiResponse("Search results retrieved successfully", pagedResponse));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @GetMapping("/count")
     public ResponseEntity<ApiResponse> getProductCountByBrandAndName(@RequestParam String brand,
             @RequestParam String name) {

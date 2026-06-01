@@ -2,6 +2,7 @@ package com.ecommerce.sshop.model.carts;
 
 import java.math.BigDecimal;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.product.Product;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -17,7 +18,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class CartItem {
+public class CartItem extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")

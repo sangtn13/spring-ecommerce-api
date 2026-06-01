@@ -23,6 +23,7 @@ public class ShopUserDetails implements UserDetails {
     private String id;
     private String email;
     private String password;
+    private boolean accountNonLocked = true;
 
     private Collection<GrantedAuthority> authorities;
 
@@ -36,6 +37,7 @@ public class ShopUserDetails implements UserDetails {
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
+                !Boolean.TRUE.equals(user.getAccountLocked()),
                 authorities);
 
     }
@@ -62,7 +64,7 @@ public class ShopUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return accountNonLocked;
     }
 
     @Override

@@ -32,7 +32,7 @@ public class CategoryController {
         return ResponseEntity.ok(new ApiResponse("Categories retrieved successfully", pagedResponse));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PostMapping()
     public ResponseEntity<ApiResponse> addCategory(@RequestBody Category name) {
         Category theCategory = categoryService.addCategory(name);
@@ -51,14 +51,14 @@ public class CategoryController {
         return ResponseEntity.ok(new ApiResponse("Category retrieved successfully", theCategory));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteCategory(@PathVariable String id) {
         categoryService.deleteCategoryById(id);
         return ResponseEntity.ok(new ApiResponse("Category deleted successfully", null));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateCategory(@PathVariable String id, @RequestBody Category category) {
         Category updateCategory = categoryService.updateCategory(category, id);

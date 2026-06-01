@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class ImageController {
     private final IImageService imageService;
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> saveImages(@RequestPart("files") List<MultipartFile> file,
             @RequestParam String productId) {
@@ -35,7 +35,7 @@ public class ImageController {
         return ResponseEntity.ok(new ApiResponse("Images uploaded successfully", imageDtos));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @GetMapping("/download/{imageId}")
     public ResponseEntity<Resource> downloadImage(@PathVariable String imageId) throws SQLException {
         Image image = imageService.getImageById(imageId);
@@ -54,7 +54,7 @@ public class ImageController {
                 .body(resource);
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PutMapping(value = "/image/{imageId}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> updateImage(@PathVariable String imageId,
             @RequestPart("file") MultipartFile file) {
@@ -67,7 +67,7 @@ public class ImageController {
                 .body(new ApiResponse("Update failed!", HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @DeleteMapping("/image/{imageId}/delete")
     public ResponseEntity<ApiResponse> deleteImage(@PathVariable String imageId) {
         Image image = imageService.getImageById(imageId);

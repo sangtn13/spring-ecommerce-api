@@ -106,4 +106,28 @@ class UserControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("User deleted successfully", response.getBody().getMessage());
     }
+
+    @Test
+    @DisplayName("Lock user successfully (Admin)")
+    void lockUser_Success() {
+        when(userService.lockUser(userId)).thenReturn(mockUser);
+        when(userService.convertUserToDto(mockUser)).thenReturn(mockUserDto);
+
+        ResponseEntity<ApiResponse> response = userController.lockUser(userId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("User locked successfully", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("Unlock user successfully (Admin)")
+    void unlockUser_Success() {
+        when(userService.unlockUser(userId)).thenReturn(mockUser);
+        when(userService.convertUserToDto(mockUser)).thenReturn(mockUserDto);
+
+        ResponseEntity<ApiResponse> response = userController.unlockUser(userId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("User unlocked successfully", response.getBody().getMessage());
+    }
 }

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.user.User;
 
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Cart {
+public class Cart extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")

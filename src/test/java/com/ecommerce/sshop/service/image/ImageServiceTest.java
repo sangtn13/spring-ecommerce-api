@@ -101,4 +101,31 @@ class ImageServiceTest {
 
         verify(imageRepository).save(mockImage);
     }
+
+    @Test
+    void deleteImageById_Branches() {
+        Image image = new Image();
+        when(imageRepository.findById(imageId)).thenReturn(Optional.of(image));
+        imageService.deleteImageById(imageId);
+        verify(imageRepository).delete(image);
+
+        when(imageRepository.findById("missing")).thenReturn(Optional.empty());
+        assertDoesNotThrow(() -> imageService.deleteImageById("missing"));
+    }
+
+    @Test
+    void updateImage_ThrowsRuntimeOnIOException() {
+        MockMultipartFile badFile = mock(MockMultipartFile.class);
+        Image mockImage = new Image();
+        mockImage.setId(imageId);
+        when(imageRepository.findById(imageId)).thenReturn(Optional.of(mockImage));
+        try {
+            when(badFile.getOriginalFilename()).thenReturn("bad.png");
+            when(badFile.getBytes()).thenThrow(new java.io.IOException("boom"));
+        } catch (Exception e) {
+            fail(e);
+        }
+
+        assertThrows(RuntimeException.class, () -> imageService.updateImage(badFile, imageId));
+    }
 }

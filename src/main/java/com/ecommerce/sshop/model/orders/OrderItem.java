@@ -2,6 +2,7 @@ package com.ecommerce.sshop.model.orders;
 
 import java.math.BigDecimal;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.product.Product;
 
 import jakarta.persistence.*;
@@ -14,7 +15,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-public class OrderItem {
+public class OrderItem extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")

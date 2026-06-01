@@ -41,7 +41,7 @@ public class OrderController {
         return ResponseEntity.ok(new ApiResponse("Order placed successfully", orderDto));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse> getOrderById(@PathVariable String orderId) {
         OrderDto order = orderService.getOrderById(orderId);
@@ -66,7 +66,7 @@ public class OrderController {
         return ResponseEntity.ok(new ApiResponse("Orders retrieved successfully", pagedResponse));
     }
 
-    @PreAuthorize("hasAuthority('Admin')")
+    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PatchMapping("/{orderId}/status/{status}")
     public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable String orderId, @PathVariable String status) {
         if (!EnumUtils.isValidEnum(OrderStatus.class, status.toUpperCase())) {

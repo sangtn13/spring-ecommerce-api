@@ -3,6 +3,7 @@ package com.ecommerce.sshop.model.role;
 import java.util.Collection;
 import java.util.HashSet;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.user.User;
 
 import jakarta.persistence.*;
@@ -15,7 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Role {
+public class Role extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "smallint unsigned")

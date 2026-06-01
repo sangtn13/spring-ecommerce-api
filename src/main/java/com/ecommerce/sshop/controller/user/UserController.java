@@ -3,6 +3,7 @@ package com.ecommerce.sshop.controller.user;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.user.IUserService;
@@ -66,9 +67,33 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('Admin')")
+    @PutMapping("/{userId}/role")
+    public ResponseEntity<ApiResponse> updateUserRole(@PathVariable String userId, @RequestBody UpdateUserRoleRequest request) {
+        User updatedUser = userService.updateUserRole(request, userId);
+        UserDto userDto = userService.convertUserToDto(updatedUser);
+        return ResponseEntity.ok(new ApiResponse("User role updated successfully", userDto));
+    }
+
+    @PreAuthorize("hasAuthority('Admin')")
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable String userId) {
         userService.deleteUser(userId);
         return ResponseEntity.ok(new ApiResponse("User deleted successfully", null));
+    }
+
+    @PreAuthorize("hasAuthority('Admin')")
+    @PutMapping("/{userId}/lock")
+    public ResponseEntity<ApiResponse> lockUser(@PathVariable String userId) {
+        User user = userService.lockUser(userId);
+        UserDto userDto = userService.convertUserToDto(user);
+        return ResponseEntity.ok(new ApiResponse("User locked successfully", userDto));
+    }
+
+    @PreAuthorize("hasAuthority('Admin')")
+    @PutMapping("/{userId}/unlock")
+    public ResponseEntity<ApiResponse> unlockUser(@PathVariable String userId) {
+        User user = userService.unlockUser(userId);
+        UserDto userDto = userService.convertUserToDto(user);
+        return ResponseEntity.ok(new ApiResponse("User unlocked successfully", userDto));
     }
 }

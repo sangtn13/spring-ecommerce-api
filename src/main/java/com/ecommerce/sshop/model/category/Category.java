@@ -2,6 +2,7 @@ package com.ecommerce.sshop.model.category;
 
 import java.util.List;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.product.Product;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -15,7 +16,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-public class Category {
+public class Category extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")

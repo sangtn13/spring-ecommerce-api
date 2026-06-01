@@ -8,5 +8,7 @@ import com.ecommerce.sshop.model.user.User;
 public interface IAuthService {
     AuthResponse authenticate(LoginRequest loginRequest);
 
+    AuthResponse refreshAccessToken(String oldRefreshToken);
+
     User register(CreateUserRequest registerRequest);
 }

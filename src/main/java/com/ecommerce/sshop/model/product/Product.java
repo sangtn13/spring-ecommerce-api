@@ -3,6 +3,7 @@ package com.ecommerce.sshop.model.product;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.model.image.Image;
 
@@ -16,7 +17,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-public class Product {
+public class Product extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")
