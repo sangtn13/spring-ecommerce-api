@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.2.2...v1.3.0) (2026-06-01)
+
+
+### Features
+
+* add base audit and refresh token ([1f69063](https://github.com/SangTran13/spring-ecommerce-api/commit/1f69063b51d9b4880e2c35b7c9c89cd725a9ec72))
+
 ## [1.2.2](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.2.1...v1.2.2) (2026-05-31)
 
 ## [1.2.1](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.2.0...v1.2.1) (2026-05-31)
