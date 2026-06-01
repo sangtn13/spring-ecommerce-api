@@ -16,6 +16,7 @@ import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.enums.OrderStatus;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.carts.CartItem;
+import com.ecommerce.sshop.model.image.Image;
 import com.ecommerce.sshop.model.orders.Order;
 import com.ecommerce.sshop.model.orders.OrderItem;
 import com.ecommerce.sshop.model.product.Product;
@@ -33,6 +34,7 @@ class MappersCoverageTest {
     private OrderMapper orderMapper;
     private OrderItemMapper orderItemMapper;
     private ProductMapper productMapper;
+    private ImageMapper imageMapper;
 
     @BeforeEach
     void setUp() {
@@ -40,6 +42,7 @@ class MappersCoverageTest {
         orderItemMapper = new OrderItemMapperImpl();
         productMapper = new ProductMapperImpl();
         cartItemMapper = new CartItemMapperImpl();
+        imageMapper = new ImageMapperImpl();
         
         orderMapper = new OrderMapperImpl();
         cartMapper = new CartMapperImpl();
@@ -97,6 +100,10 @@ class MappersCoverageTest {
         CartDto cartDto = cartMapper.toDto(cart);
         CartItemDto cartItemDto = cartItemMapper.toDto(cartItem);
         OrderItemDto orderItemDto = orderItemMapper.toDto(orderItem);
+        Image image = new Image();
+        image.setId("img-1");
+        image.setFileName("f.png");
+        var imageDto = imageMapper.toDto(image);
 
         // 2. Validate all fields are accurately mapped
         assertNotNull(userDto);
@@ -112,6 +119,8 @@ class MappersCoverageTest {
         assertEquals("prod-999", orderItemDto.getProductId());
         assertEquals("Gaming Mouse", orderItemDto.getProductName());
         assertEquals("Logitech", orderItemDto.getProductBrand());
+        assertNotNull(imageDto);
+        assertEquals("img-1", imageDto.getId());
     }
 
     @Test
@@ -124,5 +133,21 @@ class MappersCoverageTest {
         assertNull(orderMapper.toDto(null));
         assertNull(orderItemMapper.toDto(null));
         assertNull(productMapper.toDto(null));
+        assertNull(imageMapper.toDto(null));
+    }
+
+    @Test
+    void orderItemMapper_CoversNullNestedFields() {
+        OrderItem item = new OrderItem();
+        item.setId("oi-1");
+        item.setOrder(null);
+        item.setProduct(null);
+        item.setPrice(new BigDecimal("1.00"));
+        item.setQuantity(1);
+
+        OrderItemDto dto = orderItemMapper.toDto(item);
+        assertNotNull(dto);
+        assertNull(dto.getProductId());
+        assertEquals(1, dto.getQuantity());
     }
 }

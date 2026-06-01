@@ -2,12 +2,14 @@ package com.ecommerce.sshop.service.user;
 
 import java.util.Optional;
 import java.util.Set;
+import java.time.LocalDateTime;
 
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.request.users.CreateUserRequest;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
 import com.ecommerce.sshop.repository.user.IUserRepository;
 import com.ecommerce.sshop.dto.user.UserDto;
@@ -71,9 +73,7 @@ public class UserService implements IUserService {
 
                     // Set role based on request, default to "User" if not specified
                     String requestedRole = (req.getRole() != null && !req.getRole().isEmpty()) ? req.getRole() : "User";
-                    final String roleName = (requestedRole.equals("User") || requestedRole.equals("Admin"))
-                            ? requestedRole
-                            : "User";
+                    final String roleName = normalizeAllowedRole(requestedRole);
 
                     Role role = roleRepository.findByName(roleName)
                             .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found"));
@@ -82,6 +82,16 @@ public class UserService implements IUserService {
                     return userRepository.save(newUser);
                 })
                 .orElseThrow(() -> new AlreadyExistsException("User already exists with email: " + request.getEmail()));
+    }
+
+    @Override
+    public User updateUserRole(UpdateUserRoleRequest request, String userId) {
+        User user = getUserById(userId);
+        String roleName = normalizeAllowedRole(request.getRole());
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found"));
+        user.setRoles(Set.of(role));
+        return userRepository.save(user);
     }
 
     @Override
@@ -123,5 +133,36 @@ public class UserService implements IUserService {
         }
 
         return user;
+    }
+
+    @Override
+    public User lockUser(String userId) {
+        User user = getUserById(userId);
+        user.setAccountLocked(true);
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User unlockUser(String userId) {
+        User user = getUserById(userId);
+        user.setAccountLocked(false);
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User updateLastLogin(String userId) {
+        User user = getUserById(userId);
+        user.setLastLoginAt(LocalDateTime.now());
+        return userRepository.save(user);
+    }
+
+    private String normalizeAllowedRole(String rawRole) {
+        String normalizedRole = (rawRole == null || rawRole.trim().isEmpty()) ? "User" : rawRole.trim();
+        return (normalizedRole.equalsIgnoreCase("User")
+                || normalizedRole.equalsIgnoreCase("Admin")
+                || normalizedRole.equalsIgnoreCase("Manager"))
+                        ? Character.toUpperCase(normalizedRole.charAt(0))
+                                + normalizedRole.substring(1).toLowerCase()
+                        : "User";
     }
 }

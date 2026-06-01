@@ -3,7 +3,9 @@ package com.ecommerce.sshop.model.user;
 import java.util.Collection;
 import java.util.List;
 import java.util.HashSet;
+import java.time.LocalDateTime;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.carts.Cart;
 import com.ecommerce.sshop.model.orders.Order;
 import com.ecommerce.sshop.model.role.Role;
@@ -21,7 +23,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "`user`")
-public class User {
+public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")
@@ -34,6 +36,10 @@ public class User {
     private String email;
     @Column(length = 255, nullable = false)
     private String password;
+    @Column(name = "account_locked", nullable = false)
+    private Boolean accountLocked = false;
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;

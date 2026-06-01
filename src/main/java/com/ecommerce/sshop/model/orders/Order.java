@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.ecommerce.sshop.enums.OrderStatus;
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.user.User;
 
 import jakarta.persistence.*;
@@ -19,7 +20,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "orders")
-public class Order {
+public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")

@@ -2,6 +2,7 @@ package com.ecommerce.sshop.model.image;
 
 import java.sql.Blob;
 
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.product.Product;
 
 import jakarta.persistence.*;
@@ -16,7 +17,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Image {
+public class Image extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")

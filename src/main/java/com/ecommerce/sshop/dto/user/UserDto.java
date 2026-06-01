@@ -1,6 +1,7 @@
 package com.ecommerce.sshop.dto.user;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import com.ecommerce.sshop.dto.carts.CartDto;
 import com.ecommerce.sshop.dto.orders.OrderDto;
@@ -13,6 +14,8 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private String email;
+    private Boolean accountLocked;
+    private LocalDateTime lastLoginAt;
     private List<OrderDto> orders;
     private CartDto cart;
 }

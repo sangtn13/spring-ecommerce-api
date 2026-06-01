@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import com.ecommerce.sshop.enums.PaymentProvider;
 import com.ecommerce.sshop.enums.PaymentStatus;
+import com.ecommerce.sshop.model.base.BaseEntity;
 import com.ecommerce.sshop.model.orders.Order;
 
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "payment")
-public class Payment {
+public class Payment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(columnDefinition = "char(36)")
@@ -45,9 +46,6 @@ public class Payment {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String responseData;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
 
     private LocalDateTime paidAt;
 }

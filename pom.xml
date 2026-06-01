@@ -30,6 +30,7 @@
     <properties>
         <java.version>17</java.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <jacoco.skip>false</jacoco.skip>
     </properties>
     <dependencies>
         <dependency>
@@ -156,16 +157,26 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.12</version>
+                <configuration>
+                    <skip>${jacoco.skip}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
+                            <includes>
+                                <include>com/ecommerce/**</include>
+                            </includes>
                             <excludes>
                                 <exclude>java/**</exclude>
                                 <exclude>jdk/**</exclude>
                                 <exclude>sun/**</exclude>
+                                <exclude>**/*$HibernateProxy*</exclude>
+                                <exclude>**/*$HibernateInstantiator*</exclude>
+                                <exclude>**/*MockitoMock*</exclude>
+                                <exclude>**/*$auxiliary$*</exclude>
                             </excludes>
                         </configuration>
                     </execution>
@@ -180,4 +191,13 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>coverage</id>
+            <properties>
+                <jacoco.skip>false</jacoco.skip>
+            </properties>
+        </profile>
+    </profiles>
 </project>

@@ -5,7 +5,9 @@ import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.security.user.ShopUserDetails;
 import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +42,7 @@ class JwtUtilsTest {
         Authentication authentication = mock(Authentication.class);
         ShopUserDetails userDetails = new ShopUserDetails(
                 "user-123", "sangtn@gmail.com", "password", 
+                true,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
         when(authentication.getPrincipal()).thenReturn(userDetails);
@@ -64,5 +67,13 @@ class JwtUtilsTest {
         assertThrows(JwtException.class, () -> {
             jwtUtils.validateJwtToken(invalidToken);
         });
+    }
+
+    @Test
+    void generateTokenForUserEmail_Success() {
+        Role role = new Role("Admin");
+        String token = jwtUtils.generateTokenForUserEmail("admin@test.com", "u-1", Set.of(role));
+        assertTrue(jwtUtils.validateJwtToken(token));
+        assertEquals("admin@test.com", jwtUtils.getUserNameFromJwtToken(token));
     }
 }

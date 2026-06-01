@@ -34,7 +34,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
     @Override
     public void onApplicationEvent(@Nullable ApplicationReadyEvent event) {
-        createDefaultRolesIfNotExists(Set.of("User", "Admin"));
+        createDefaultRolesIfNotExists(Set.of("User", "Admin", "Manager"));
         createDefaultUserIfNotExists();
         createDefaultAdminIfNotExists();
     }

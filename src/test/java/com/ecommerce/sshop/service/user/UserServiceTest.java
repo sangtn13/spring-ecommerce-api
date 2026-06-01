@@ -15,6 +15,7 @@ import com.ecommerce.sshop.repository.user.IUserRepository;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.request.users.CreateUserRequest;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
 import com.ecommerce.sshop.exception.user.UserNotFoundException;
 
@@ -217,5 +218,28 @@ class UserServiceTest {
         when(userRepository.findByEmail("missing@gmail.com")).thenReturn(null);
 
         assertThrows(UserNotFoundException.class, () -> userService.getCurrentUser());
+    }
+
+    @Test
+    void roleLockAndLoginTimeFlows() {
+        Role managerRole = new Role("Manager");
+        UpdateUserRoleRequest roleRequest = new UpdateUserRoleRequest();
+        roleRequest.setRole("manager");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(sampleUser));
+        when(roleRepository.findByName("Manager")).thenReturn(Optional.of(managerRole));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        User changedRole = userService.updateUserRole(roleRequest, userId);
+        assertTrue(changedRole.getRoles().stream().anyMatch(r -> r.getName().equals("Manager")));
+
+        User locked = userService.lockUser(userId);
+        assertTrue(locked.getAccountLocked());
+
+        User unlocked = userService.unlockUser(userId);
+        assertFalse(unlocked.getAccountLocked());
+
+        User updatedLogin = userService.updateLastLogin(userId);
+        assertNotNull(updatedLogin.getLastLoginAt());
     }
 }

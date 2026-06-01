@@ -12,11 +12,13 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @RequiredArgsConstructor
 @RestController
@@ -29,9 +31,26 @@ public class AuthController {
         try {
             AuthResponse authResponse = authService.authenticate(loginRequest);
             return ResponseEntity.ok(new ApiResponse("Login Successful", authResponse));
+        } catch (LockedException e) {
+            return ResponseEntity.status(HttpStatus.LOCKED)
+                    .body(new ApiResponse("User is locked", e.getMessage()));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse("Invalid email or password", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse> refreshToken(@RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken) {
+        try {
+            AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
+            return ResponseEntity.ok(new ApiResponse("Token refreshed successfully", authResponse));
+        } catch (LockedException e) {
+            return ResponseEntity.status(HttpStatus.LOCKED)
+                    .body(new ApiResponse("User is locked", e.getMessage()));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse("Invalid or expired refresh token", e.getMessage()));
         }
     }
 

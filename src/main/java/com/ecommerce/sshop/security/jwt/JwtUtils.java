@@ -3,7 +3,9 @@ package com.ecommerce.sshop.security.jwt;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import java.util.Collection;
 
+import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.security.user.ShopUserDetails;
 
 import io.jsonwebtoken.Jwts;
@@ -35,6 +37,20 @@ public class JwtUtils {
         return Jwts.builder()
                 .setSubject(userPrincipal.getEmail())
                 .claim("id", userPrincipal.getId())
+                .claim("roles", roles)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + expirationTime))
+                .signWith(key(), SignatureAlgorithm.HS512).compact();
+    }
+
+    public String generateTokenForUserEmail(String email, String userId, Collection<Role> userRoles) {
+        List<String> roles = userRoles.stream()
+                .map(Role::getName)
+                .toList();
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("id", userId)
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + expirationTime))

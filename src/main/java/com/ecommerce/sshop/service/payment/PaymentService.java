@@ -102,7 +102,6 @@ public class PaymentService implements IPaymentService {
             payment.setStatus(PaymentStatus.PENDING);
             payment.setAmount(order.getTotalAmount());
             payment.setOrderCode(orderCode);
-            payment.setCreatedAt(LocalDateTime.now());
         }
 
         try {

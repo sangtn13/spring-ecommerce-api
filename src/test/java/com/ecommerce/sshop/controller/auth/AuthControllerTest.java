@@ -19,6 +19,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +50,7 @@ class AuthControllerTest {
     @DisplayName("Authenticate successfully and return JWT Token")
     void login_Success() {
         // Given
-        AuthResponse mockAuthResponse = new AuthResponse("user-uuid-123", "mocked-jwt-token-string");
+        AuthResponse mockAuthResponse = new AuthResponse("user-uuid-123", "mocked-jwt-token-string", "refresh-token");
         when(authService.authenticate(loginRequest)).thenReturn(mockAuthResponse);
 
         // When
@@ -60,6 +62,43 @@ class AuthControllerTest {
         assertEquals("Login Successful", response.getBody().getMessage());
         assertEquals(mockAuthResponse, response.getBody().getData());
         verify(authService, times(1)).authenticate(loginRequest);
+    }
+
+    @Test
+    @DisplayName("Refresh token successfully")
+    void refreshToken_Success() {
+        AuthResponse mockAuthResponse = new AuthResponse("user-uuid-123", "new-access", "new-refresh");
+        when(authService.refreshAccessToken("old-refresh")).thenReturn(mockAuthResponse);
+
+        ResponseEntity<ApiResponse> response = authController.refreshToken("old-refresh");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Token refreshed successfully", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("Login failed due to locked account")
+    void login_Failure_Locked() {
+        when(authService.authenticate(loginRequest)).thenThrow(new LockedException("User is locked."));
+
+        ResponseEntity<ApiResponse> response = authController.login(loginRequest);
+
+        assertEquals(HttpStatus.LOCKED, response.getStatusCode());
+        assertEquals("User is locked", response.getBody().getMessage());
+    }
+
+    @Test
+    void refreshToken_Invalid() {
+        when(authService.refreshAccessToken("bad")).thenThrow(new BadCredentialsException("Invalid or expired refresh token"));
+        ResponseEntity<ApiResponse> response = authController.refreshToken("bad");
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    void refreshToken_Locked() {
+        when(authService.refreshAccessToken("locked-token")).thenThrow(new LockedException("User is locked."));
+        ResponseEntity<ApiResponse> response = authController.refreshToken("locked-token");
+        assertEquals(HttpStatus.LOCKED, response.getStatusCode());
     }
 
     @Test
