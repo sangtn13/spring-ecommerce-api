@@ -23,6 +23,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
@@ -112,5 +114,95 @@ class AuthServiceTest {
         assertEquals("new-refresh-token", response.getRefreshToken());
         verify(refreshTokenService).revoke("old-refresh-token");
         verify(userService).updateLastLogin("user-123");
+    }
+
+    @Test
+    @DisplayName("Authenticate throws locked exception when account is locked by Spring Security")
+    void authenticate_LockedByAuthenticationManager_ThrowsException() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("locked@gmail.com");
+        loginRequest.setPassword("password");
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new LockedException("locked"));
+
+        var exception = assertThrows(com.ecommerce.sshop.exception.auth.UserLockedAuthException.class,
+                () -> authService.authenticate(loginRequest));
+
+        assertEquals("User is locked", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Authenticate throws invalid credentials when authentication fails")
+    void authenticate_InvalidCredentials_ThrowsException() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("wrong@gmail.com");
+        loginRequest.setPassword("wrong");
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("bad credentials"));
+
+        var exception = assertThrows(com.ecommerce.sshop.exception.auth.InvalidCredentialsException.class,
+                () -> authService.authenticate(loginRequest));
+
+        assertEquals("Invalid email or password", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Authenticate throws locked exception when user is locked after login refresh")
+    void authenticate_UserLockedAfterLogin_ThrowsException() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("test@gmail.com");
+        loginRequest.setPassword("password");
+
+        Authentication mockAuth = mock(Authentication.class);
+        ShopUserDetails userDetails = new ShopUserDetails("user-123", "test@gmail.com", "pass",
+                true, Collections.emptyList());
+        User lockedUser = new User();
+        lockedUser.setId("user-123");
+        lockedUser.setAccountLocked(true);
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(mockAuth);
+        when(jwtUtils.generateTokenForUser(mockAuth)).thenReturn("mocked-jwt-token");
+        when(mockAuth.getPrincipal()).thenReturn(userDetails);
+        when(userService.updateLastLogin("user-123")).thenReturn(lockedUser);
+
+        var exception = assertThrows(com.ecommerce.sshop.exception.auth.UserLockedAuthException.class,
+                () -> authService.authenticate(loginRequest));
+
+        assertEquals("User is locked", exception.getMessage());
+        verify(refreshTokenService, never()).create(any());
+    }
+
+    @Test
+    @DisplayName("Refresh token throws invalid refresh token when input is blank")
+    void refreshAccessToken_BlankToken_ThrowsException() {
+        var exception = assertThrows(com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException.class,
+                () -> authService.refreshAccessToken(" "));
+
+        assertEquals("Refresh token not found", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Refresh token throws locked exception when verified user is locked")
+    void refreshAccessToken_Locked_ThrowsException() {
+        when(refreshTokenService.verify("locked-token")).thenThrow(new LockedException("locked"));
+
+        var exception = assertThrows(com.ecommerce.sshop.exception.auth.UserLockedAuthException.class,
+                () -> authService.refreshAccessToken("locked-token"));
+
+        assertEquals("User is locked", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Refresh token throws invalid refresh token when verification returns null")
+    void refreshAccessToken_InvalidOrExpired_ThrowsException() {
+        when(refreshTokenService.verify("expired-token")).thenReturn(null);
+
+        var exception = assertThrows(com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException.class,
+                () -> authService.refreshAccessToken("expired-token"));
+
+        assertEquals("Invalid or expired refresh token", exception.getMessage());
+        verify(refreshTokenService, never()).revoke(anyString());
     }
 }

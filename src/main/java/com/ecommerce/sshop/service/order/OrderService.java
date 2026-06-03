@@ -31,6 +31,8 @@ import org.apache.commons.lang3.EnumUtils;
 @Service
 @RequiredArgsConstructor
 public class OrderService implements IOrderService {
+    private static final String ORDER_NOT_FOUND_WITH_ID_MESSAGE = "Order not found with id: ";
+
     private final IOrderRepository orderRepository;
     private final IProductRepository productRepository;
     private final ICartService cartService;
@@ -97,7 +99,7 @@ public class OrderService implements IOrderService {
     public OrderDto getOrderById(String orderId) {
         return orderRepository.findById(orderId)
                 .map(this::convertToDto)
-                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException(ORDER_NOT_FOUND_WITH_ID_MESSAGE + orderId));
     }
 
     @Override
@@ -115,7 +117,7 @@ public class OrderService implements IOrderService {
         }
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException(ORDER_NOT_FOUND_WITH_ID_MESSAGE + orderId));
         OrderStatus newStatus = Enum.valueOf(OrderStatus.class, status.toUpperCase());
         if (!isValidStatusTransition(order.getOrderStatus(), newStatus)) {
             throw new StatusInvalidException(
@@ -129,7 +131,7 @@ public class OrderService implements IOrderService {
     @Transactional
     public Order cancelUserOrder(String userId, String orderId) {
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
-                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException(ORDER_NOT_FOUND_WITH_ID_MESSAGE + orderId));
 
         if (!isValidStatusTransition(order.getOrderStatus(), OrderStatus.CANCELED)) {
             throw new StatusInvalidException(

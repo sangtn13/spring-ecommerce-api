@@ -26,6 +26,8 @@ import org.springframework.security.core.AuthenticationException;
 @Service
 @RequiredArgsConstructor
 public class AuthService implements IAuthService {
+    private static final String USER_IS_LOCKED_MESSAGE = "User is locked";
+
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final IUserService userService;
@@ -38,7 +40,7 @@ public class AuthService implements IAuthService {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
         } catch (LockedException exception) {
-            throw new UserLockedAuthException("User is locked");
+            throw new UserLockedAuthException(USER_IS_LOCKED_MESSAGE);
         } catch (AuthenticationException exception) {
             throw new InvalidCredentialsException("Invalid email or password");
         }
@@ -47,7 +49,7 @@ public class AuthService implements IAuthService {
         ShopUserDetails userDetails = (ShopUserDetails) authentication.getPrincipal();
         User latestUser = userService.updateLastLogin(userDetails.getId());
         if (Boolean.TRUE.equals(latestUser.getAccountLocked())) {
-            throw new UserLockedAuthException("User is locked");
+            throw new UserLockedAuthException(USER_IS_LOCKED_MESSAGE);
         }
         RefreshToken refreshToken = refreshTokenService.create(latestUser);
         return new AuthResponse(userDetails.getId(), jwt, refreshToken.getToken());
@@ -63,7 +65,7 @@ public class AuthService implements IAuthService {
         try {
             user = refreshTokenService.verify(oldRefreshToken);
         } catch (LockedException exception) {
-            throw new UserLockedAuthException("User is locked");
+            throw new UserLockedAuthException(USER_IS_LOCKED_MESSAGE);
         }
         if (user == null) {
             throw new InvalidRefreshTokenException("Invalid or expired refresh token");

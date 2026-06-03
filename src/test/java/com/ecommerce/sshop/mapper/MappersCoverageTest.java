@@ -10,6 +10,8 @@ import java.util.HashSet;
 
 import com.ecommerce.sshop.dto.carts.CartDto;
 import com.ecommerce.sshop.dto.carts.CartItemDto;
+import com.ecommerce.sshop.dto.brand.BrandDto;
+import com.ecommerce.sshop.dto.category.CategoryDto;
 import com.ecommerce.sshop.dto.orders.OrderDto;
 import com.ecommerce.sshop.dto.orders.OrderItemDto;
 import com.ecommerce.sshop.dto.product.ProductDto;
@@ -39,6 +41,8 @@ class MappersCoverageTest {
     private OrderItemMapper orderItemMapper;
     private ProductMapper productMapper;
     private ImageMapper imageMapper;
+    private BrandMapper brandMapper;
+    private CategoryMapper categoryMapper;
 
     @BeforeEach
     void setUp() {
@@ -47,6 +51,8 @@ class MappersCoverageTest {
         productMapper = new ProductMapperImpl();
         cartItemMapper = new CartItemMapperImpl();
         imageMapper = new ImageMapperImpl();
+        brandMapper = new BrandMapperImpl();
+        categoryMapper = new CategoryMapperImpl();
         
         orderMapper = new OrderMapperImpl();
         cartMapper = new CartMapperImpl();
@@ -147,6 +153,8 @@ class MappersCoverageTest {
         assertNull(orderItemMapper.toDto(null));
         assertNull(productMapper.toDto(null));
         assertNull(imageMapper.toDto(null));
+        assertNull(brandMapper.toDto(null));
+        assertNull(categoryMapper.toDto(null));
     }
 
     @Test
@@ -162,5 +170,23 @@ class MappersCoverageTest {
         assertNotNull(dto);
         assertNull(dto.getProductId());
         assertEquals(1, dto.getQuantity());
+    }
+
+    @Test
+    void brandAndCategoryMappers_MapSimpleEntities() {
+        Brand brand = new Brand("Sony");
+        brand.setId("brand-1");
+        Category category = new Category("Audio");
+        category.setId("category-1");
+
+        BrandDto brandDto = brandMapper.toDto(brand);
+        CategoryDto categoryDto = categoryMapper.toDto(category);
+
+        assertNotNull(brandDto);
+        assertEquals("brand-1", brandDto.getId());
+        assertEquals("Sony", brandDto.getName());
+        assertNotNull(categoryDto);
+        assertEquals("category-1", categoryDto.getId());
+        assertEquals("Audio", categoryDto.getName());
     }
 }
