@@ -95,4 +95,18 @@ class RefreshTokenServiceTest {
         refreshTokenService.revoke("t");
         assertEquals(first, token.getRevokedAt());
     }
+
+    @Test
+    void revokeByUserId_SetsRevokedAtOnlyOnce() {
+        RefreshToken token = new RefreshToken();
+        when(refreshTokenRepository.findByUserId("u1")).thenReturn(Optional.of(token));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
+
+        refreshTokenService.revokeByUserId("u1");
+
+        assertNotNull(token.getRevokedAt());
+        LocalDateTime first = token.getRevokedAt();
+        refreshTokenService.revokeByUserId("u1");
+        assertEquals(first, token.getRevokedAt());
+    }
 }

@@ -9,4 +9,6 @@ public interface IRefreshTokenService {
     User verify(String token);
 
     void revoke(String token);
+
+    void revokeByUserId(String userId);
 }

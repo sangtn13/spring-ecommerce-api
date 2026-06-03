@@ -23,12 +23,16 @@ SShop is a Spring Boot REST API for an eCommerce system. It provides authenticat
 
 ### 🔐 Authentication & Authorization
 - JWT authentication with access and refresh tokens
+- Redis-backed access token blacklist for logout and password changes
 - Role-based access control with `User`, `Admin`, and `Manager`
 - Protected endpoints with Spring Security
 - Account lock support
 
 ### 👤 User Management
 - User registration and login
+- Logout with access-token invalidation
+- Change password for the authenticated user
+- Forgot password and reset password flows backed by Redis reset tokens and SMTP email delivery
 - Current profile retrieval
 - Admin user creation and update
 - Role update, lock, and unlock actions
@@ -121,11 +125,24 @@ spring.datasource.username=your_username
 spring.datasource.password=your_password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=YOUR_SMTP_USERNAME
+spring.mail.password=YOUR_SMTP_PASSWORD_OR_APP_PASSWORD
+
 api.prefix=/api/v1
 
 sshop.app.jwtSecret=PLEASE_GENERATE_YOUR_OWN_JWT_SECRET_KEY_HERE
 sshop.app.jwtExpirationMs=3600000
 sshop.app.refreshTokenExpirationMs=604800000
+sshop.app.passwordResetTokenExpirationMs=900000
+sshop.app.resetPasswordBaseUrl=http://localhost:3000/reset-password
+sshop.mail.fromName=SShop
+sshop.mail.fromAddress=YOUR_SMTP_USERNAME
+sshop.mail.supportEmail=support@example.com
 
 sshop.seed.user.password=
 sshop.seed.admin.password=
@@ -185,16 +202,50 @@ http://localhost:5050
 The repository includes `docker-compose.yaml` for:
 
 - MySQL
+- Redis
 - SonarQube
 - PostgreSQL for SonarQube
 
-Before running Docker Compose, copy `.env.example` to `.env` and update the values.
+Before running Docker Compose, copy `.env.example` to `.env` and update the values used by Compose.
+
+If the Spring Boot app runs on your machine while Redis runs in Docker, keep:
+
+```properties
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+```
+
+If the app later runs in Docker on the same Compose network, set:
+
+```text
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+For password reset email, fill these placeholders in `src/main/resources/application.properties`:
+
+```text
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-smtp-username
+MAIL_PASSWORD=your-smtp-password-or-app-password
+MAIL_FROM_NAME=SShop
+MAIL_FROM_ADDRESS=your-sender-address
+MAIL_SUPPORT_EMAIL=support@example.com
+RESET_PASSWORD_BASE_URL=http://localhost:3000/reset-password
+```
+
+`RESET_PASSWORD_BASE_URL` should point to your frontend page that reads the `token` query parameter and lets the user submit a new password.
 
 ## 🔒 Security Configuration
 
 ### Public endpoints
 
-- `/api/v1/auth/**`
+- `/api/v1/auth/login`
+- `/api/v1/auth/register`
+- `/api/v1/auth/refresh`
+- `/api/v1/auth/forgot-password`
+- `/api/v1/auth/reset-password`
 - `/api/v1/products/**`
 - `/api/v1/categories/**`
 - `/api/v1/brands/**`
@@ -202,6 +253,8 @@ Before running Docker Compose, copy `.env.example` to `.env` and update the valu
 
 ### Authenticated endpoints
 
+- `/api/v1/auth/logout`
+- `/api/v1/auth/change-password`
 - `/api/v1/users/**`
 - `/api/v1/orders/**`
 - `/api/v1/cart`

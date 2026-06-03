@@ -3,6 +3,7 @@ package com.ecommerce.sshop.exception.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.ecommerce.sshop.exception.auth.InvalidCredentialsException;
+import com.ecommerce.sshop.exception.auth.InvalidPasswordResetTokenException;
 import com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException;
 import com.ecommerce.sshop.exception.auth.UserLockedAuthException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
@@ -50,6 +51,14 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<ApiResponse> response = handler.handleBadRequestException(new EmptyCartException("bad req"));
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("bad req", response.getBody().getMessage());
+    }
+
+    @Test
+    void handlesInvalidPasswordResetTokenAsBadRequest() {
+        ResponseEntity<ApiResponse> response = handler.handleBadRequestException(
+                new InvalidPasswordResetTokenException("Invalid or expired password reset token"));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Invalid or expired password reset token", response.getBody().getMessage());
     }
 
     @Test
