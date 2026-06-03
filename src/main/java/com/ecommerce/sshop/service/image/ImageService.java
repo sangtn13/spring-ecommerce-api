@@ -35,7 +35,9 @@ public class ImageService implements IImageService {
     public void deleteImageById(String id) {
         imageRepository.findById(id)
                 .ifPresentOrElse(imageRepository::delete,
-                        () -> new ImageNotFoundException("Image not found with id: !!" + id));
+                        () -> {
+                            throw new ImageNotFoundException("Image not found with id: !!" + id);
+                        });
     }
 
     @Override
@@ -50,7 +52,7 @@ public class ImageService implements IImageService {
                 image.setImage(new SerialBlob(fileItem.getBytes()));
                 image.setProduct(product);
 
-                String buildDownloadUrl = "/api/v1/images/image/download/";
+                String buildDownloadUrl = "/api/v1/images/";
                 String downloadUrl = buildDownloadUrl + image.getId();
                 image.setDownloadUrl(downloadUrl);
 

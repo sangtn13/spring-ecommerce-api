@@ -7,30 +7,58 @@ import com.ecommerce.sshop.model.product.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-public interface IProductRepository extends JpaRepository<Product, String> {
-
+public interface IProductRepository extends JpaRepository<Product, String>, JpaSpecificationExecutor<Product> {
     List<Product> findByCategoryName(String category);
 
-    List<Product> findByBrand(String brand);
+    List<Product> findByBrandName(String brand);
 
-    List<Product> findByCategoryNameAndBrand(String category, String brand);
+    List<Product> findByCategoryNameAndBrandName(String category, String brand);
 
-    List<Product> findByName(String name);
+    List<Product> findByNameStartingWith(String name);
 
-    List<Product> findByBrandAndName(String brand, String name);
+    List<Product> findByBrandNameAndNameStartingWith(String brand, String name);
 
-    Long countByBrandAndName(String brand, String name);
-
-    boolean existsByNameAndBrand(String name, String brand);
+    boolean existsByNameAndBrandName(String name, String brand);
 
     Page<Product> findByCategoryName(String category, Pageable pageable);
 
-    Page<Product> findByBrand(String brand, Pageable pageable);
+    Page<Product> findByBrandName(String brand, Pageable pageable);
 
-    @Query(value = "SELECT * FROM product p WHERE MATCH(p.name, p.brand, p.description) AGAINST (?1 IN NATURAL LANGUAGE MODE)",
-            countQuery = "SELECT COUNT(*) FROM product p WHERE MATCH(p.name, p.brand, p.description) AGAINST (?1 IN NATURAL LANGUAGE MODE)",
+    @Query(value = """
+            SELECT p.*
+            FROM product p
+            JOIN brand b ON p.brand_id = b.id
+            JOIN category c ON p.category_id = c.id
+            WHERE (?1 IS NULL OR b.id = ?1)
+              AND (?2 IS NULL OR c.id = ?2)
+              AND (?3 IS NULL OR MATCH(p.name) AGAINST (?3 IN BOOLEAN MODE))
+              AND (?4 IS NULL OR LOCATE(?4, TRIM(REGEXP_REPLACE(LOWER(p.name), '[^[:alnum:]]+', ' '))) > 0)
+              AND (?5 IS NULL OR p.price >= ?5)
+              AND (?6 IS NULL OR p.price <= ?6)
+            """,
+            countQuery = """
+            SELECT COUNT(*)
+            FROM product p
+            JOIN brand b ON p.brand_id = b.id
+            JOIN category c ON p.category_id = c.id
+            WHERE (?1 IS NULL OR b.id = ?1)
+              AND (?2 IS NULL OR c.id = ?2)
+              AND (?3 IS NULL OR MATCH(p.name) AGAINST (?3 IN BOOLEAN MODE))
+              AND (?4 IS NULL OR LOCATE(?4, TRIM(REGEXP_REPLACE(LOWER(p.name), '[^[:alnum:]]+', ' '))) > 0)
+              AND (?5 IS NULL OR p.price >= ?5)
+              AND (?6 IS NULL OR p.price <= ?6)
+            """,
             nativeQuery = true)
-    Page<Product> searchProducts(String keyword, Pageable pageable);
+    Page<Product> searchProductsByFilters(
+            String brandId,
+            String categoryId,
+            String fullTextName,
+            String normalizedNamePhrase,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
+            Pageable pageable);
+
 }

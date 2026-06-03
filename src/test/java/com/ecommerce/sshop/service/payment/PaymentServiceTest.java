@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,7 @@ import com.ecommerce.sshop.enums.PaymentProvider;
 import com.ecommerce.sshop.enums.PaymentStatus;
 import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.exception.order.OrderNotPendingException;
+import com.ecommerce.sshop.exception.payment.PaymentNotFoundException;
 import com.ecommerce.sshop.model.orders.Order;
 import com.ecommerce.sshop.model.orders.OrderItem;
 import com.ecommerce.sshop.model.payment.Payment;
@@ -181,6 +183,31 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("Create payment link recreates checkout link for canceled payment instead of reusing cached link")
+    void createOrderPaymentLink_CanceledPayment_CreatesNewLink() throws Exception {
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(sampleOrder));
+
+        Payment existingPayment = new Payment();
+        existingPayment.setStatus(PaymentStatus.CANCELED);
+        existingPayment.setResponseData("{\"checkoutUrl\":\"http://old-cached\"}");
+        existingPayment.setOrderCode(111L);
+        when(paymentRepository.findByOrderId("order-1")).thenReturn(Optional.of(existingPayment));
+
+        CreatePaymentLinkResponse response = org.mockito.Mockito.mock(CreatePaymentLinkResponse.class);
+        when(response.getCheckoutUrl()).thenReturn("http://pay.local/new-checkout");
+        when(payOS.paymentRequests().create(any(CreatePaymentLinkRequest.class))).thenReturn(response);
+        when(objectMapper.writeValueAsString(response)).thenReturn("{\"checkoutUrl\":\"http://pay.local/new-checkout\"}");
+
+        String result = paymentService.createOrderPaymentLink("order-1");
+
+        assertEquals("http://pay.local/new-checkout", result);
+        assertEquals(PaymentStatus.PENDING, existingPayment.getStatus());
+        assertNotEquals(111L, existingPayment.getOrderCode());
+        verify(payOS.paymentRequests()).create(any(CreatePaymentLinkRequest.class));
+        verify(paymentRepository).save(eq(existingPayment));
+    }
+
+    @Test
     @DisplayName("Handle webhook throws when verification fails")
     void handlePayOSWebhook_VerificationFails() throws Exception {
         Object webhookBody = new Object();
@@ -227,5 +254,44 @@ class PaymentServiceTest {
         assertEquals(OrderStatus.PROCESSING, sampleOrder.getOrderStatus());
         verify(orderRepository).save(eq(sampleOrder));
         verify(paymentRepository).save(eq(payment));
+    }
+
+    @Test
+    @DisplayName("Mark payment canceled updates pending payment to canceled")
+    void markPaymentCanceled_PendingPayment_Success() {
+        Payment payment = new Payment();
+        payment.setStatus(PaymentStatus.PENDING);
+        when(paymentRepository.findByOrderId("order-1")).thenReturn(Optional.of(payment));
+
+        paymentService.markPaymentCanceled("order-1");
+
+        assertEquals(PaymentStatus.CANCELED, payment.getStatus());
+        verify(paymentRepository).save(eq(payment));
+    }
+
+    @Test
+    @DisplayName("Mark payment canceled ignores success payment")
+    void markPaymentCanceled_SuccessPayment_NoUpdate() {
+        Payment payment = new Payment();
+        payment.setStatus(PaymentStatus.SUCCESS);
+        when(paymentRepository.findByOrderId("order-1")).thenReturn(Optional.of(payment));
+
+        paymentService.markPaymentCanceled("order-1");
+
+        assertEquals(PaymentStatus.SUCCESS, payment.getStatus());
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("Mark payment canceled throws when payment is not found")
+    void markPaymentCanceled_PaymentNotFound_ThrowsException() {
+        when(paymentRepository.findByOrderId("order-1")).thenReturn(Optional.empty());
+
+        PaymentNotFoundException exception = assertThrows(PaymentNotFoundException.class,
+                () -> paymentService.markPaymentCanceled("order-1"));
+
+        assertEquals("Payment not found for order id: order-1", exception.getMessage());
+        verify(paymentRepository, times(1)).findByOrderId("order-1");
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 }

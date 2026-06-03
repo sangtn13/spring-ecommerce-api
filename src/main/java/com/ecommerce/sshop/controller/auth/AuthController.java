@@ -10,10 +10,7 @@ import com.ecommerce.sshop.model.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.LockedException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,30 +25,14 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        try {
-            AuthResponse authResponse = authService.authenticate(loginRequest);
-            return ResponseEntity.ok(new ApiResponse("Login Successful", authResponse));
-        } catch (LockedException e) {
-            return ResponseEntity.status(HttpStatus.LOCKED)
-                    .body(new ApiResponse("User is locked", e.getMessage()));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse("Invalid email or password", e.getMessage()));
-        }
+        AuthResponse authResponse = authService.authenticate(loginRequest);
+        return ResponseEntity.ok(new ApiResponse("Login Successful", authResponse));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse> refreshToken(@RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken) {
-        try {
-            AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
-            return ResponseEntity.ok(new ApiResponse("Token refreshed successfully", authResponse));
-        } catch (LockedException e) {
-            return ResponseEntity.status(HttpStatus.LOCKED)
-                    .body(new ApiResponse("User is locked", e.getMessage()));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse("Invalid or expired refresh token", e.getMessage()));
-        }
+        AuthResponse authResponse = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(new ApiResponse("Token refreshed successfully", authResponse));
     }
 
     @PostMapping("/register")

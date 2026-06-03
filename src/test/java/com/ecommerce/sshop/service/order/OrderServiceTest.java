@@ -116,7 +116,7 @@ class OrderServiceTest {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order updated = orderService.updateOrderStatus(orderId, OrderStatus.PROCESSING);
+        Order updated = orderService.updateOrderStatus(orderId, "PROCESSING");
 
         assertEquals(OrderStatus.PROCESSING, updated.getOrderStatus());
     }
@@ -130,7 +130,7 @@ class OrderServiceTest {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
 
         assertThrows(StatusInvalidException.class, () -> 
-            orderService.updateOrderStatus(orderId, OrderStatus.CANCELED)
+            orderService.updateOrderStatus(orderId, "CANCELED")
         );
     }
 
@@ -159,7 +159,7 @@ class OrderServiceTest {
     @Test
     void updateOrderStatus_NotFound_ThrowsException() {
         when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
-        assertThrows(OrderNotFoundException.class, () -> orderService.updateOrderStatus(orderId, OrderStatus.PROCESSING));
+        assertThrows(OrderNotFoundException.class, () -> orderService.updateOrderStatus(orderId, "PROCESSING"));
     }
 
     @Test
@@ -168,12 +168,12 @@ class OrderServiceTest {
         order.setOrderStatus(OrderStatus.PROCESSING);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        assertEquals(OrderStatus.SHIPPED, orderService.updateOrderStatus(orderId, OrderStatus.SHIPPED).getOrderStatus());
+        assertEquals(OrderStatus.SHIPPED, orderService.updateOrderStatus(orderId, "SHIPPED").getOrderStatus());
 
         Order shipped = new Order();
         shipped.setOrderStatus(OrderStatus.SHIPPED);
         when(orderRepository.findById("order-2")).thenReturn(Optional.of(shipped));
-        assertEquals(OrderStatus.DELIVERED, orderService.updateOrderStatus("order-2", OrderStatus.DELIVERED).getOrderStatus());
+        assertEquals(OrderStatus.DELIVERED, orderService.updateOrderStatus("order-2", "DELIVERED").getOrderStatus());
     }
 
     @Test
@@ -186,5 +186,33 @@ class OrderServiceTest {
         var pageable = PageRequest.of(0, 2);
         when(orderRepository.findByUserId(userId, pageable)).thenReturn(new PageImpl<>(List.of(order)));
         assertEquals(1, orderService.getUserOrdersWithPaging(userId, pageable).getContent().size());
+    }
+
+    @Test
+    void cancelUserOrder_Success() {
+        Order order = new Order();
+        order.setOrderStatus(OrderStatus.PENDING);
+        when(orderRepository.findByIdAndUserId(orderId, userId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Order canceled = orderService.cancelUserOrder(userId, orderId);
+
+        assertEquals(OrderStatus.CANCELED, canceled.getOrderStatus());
+    }
+
+    @Test
+    void cancelUserOrder_NotFound_ThrowsException() {
+        when(orderRepository.findByIdAndUserId(orderId, userId)).thenReturn(Optional.empty());
+
+        assertThrows(OrderNotFoundException.class, () -> orderService.cancelUserOrder(userId, orderId));
+    }
+
+    @Test
+    void cancelUserOrder_InvalidTransition_ThrowsException() {
+        Order order = new Order();
+        order.setOrderStatus(OrderStatus.SHIPPED);
+        when(orderRepository.findByIdAndUserId(orderId, userId)).thenReturn(Optional.of(order));
+
+        assertThrows(StatusInvalidException.class, () -> orderService.cancelUserOrder(userId, orderId));
     }
 }

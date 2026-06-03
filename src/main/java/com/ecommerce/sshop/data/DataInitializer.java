@@ -1,6 +1,7 @@
 package com.ecommerce.sshop.data;
 
 import java.util.Set;
+import java.util.HashSet;
 
 import com.ecommerce.sshop.repository.role.IRoleRepository;
 import com.ecommerce.sshop.repository.user.IUserRepository;
@@ -54,7 +55,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
             user.setLastName("User" + i);
             user.setEmail(defaultEmail);
             user.setPassword(passwordEncoder.encode(defaultUserPassword));
-            user.setRoles(Set.of(userRole));
+            user.setRoles(new HashSet<>(Set.of(userRole)));
             userRepository.save(user);
         }
     }
@@ -73,7 +74,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
         user.setLastName("Admin");
         user.setEmail(adminEmail);
         user.setPassword(passwordEncoder.encode(defaultAdminPassword));
-        user.setRoles(Set.of(adminRole));
+        user.setRoles(new HashSet<>(Set.of(adminRole)));
         userRepository.save(user);
     }
 

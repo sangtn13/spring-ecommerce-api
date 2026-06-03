@@ -5,6 +5,7 @@ import com.ecommerce.sshop.enums.PaymentProvider;
 import com.ecommerce.sshop.enums.PaymentStatus;
 import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.exception.order.OrderNotPendingException;
+import com.ecommerce.sshop.exception.payment.PaymentNotFoundException;
 import com.ecommerce.sshop.model.orders.Order;
 import com.ecommerce.sshop.model.payment.Payment;
 import com.ecommerce.sshop.repository.order.IOrderRepository;
@@ -54,7 +55,7 @@ public class PaymentService implements IPaymentService {
             if (payment.getStatus() == PaymentStatus.SUCCESS) {
                 throw new IllegalStateException("Order has already been paid successfully. No need to create a new payment link.");
             }
-            if (payment.getResponseData() != null) {
+            if (payment.getStatus() == PaymentStatus.PENDING && payment.getResponseData() != null) {
                 try {
                     CreatePaymentLinkResponse cachedResponse = objectMapper.readValue(
                             payment.getResponseData(), CreatePaymentLinkResponse.class);
@@ -77,7 +78,7 @@ public class PaymentService implements IPaymentService {
         String returnUrl = returnUrlBase + "?orderId=" + orderId;
         String cancelUrl = cancelUrlBase + "?orderId=" + orderId;
 
-        long orderCode = orderId.hashCode() & 0xFFFFFFFFL;
+        long orderCode = generateOrderCode(orderId);
 
         CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
             .orderCode(orderCode)
@@ -99,10 +100,13 @@ public class PaymentService implements IPaymentService {
             payment = new Payment();
             payment.setOrder(order);
             payment.setProvider(PaymentProvider.PAYOS);
-            payment.setStatus(PaymentStatus.PENDING);
             payment.setAmount(order.getTotalAmount());
-            payment.setOrderCode(orderCode);
         }
+
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setPaidAt(null);
+        payment.setAmount(order.getTotalAmount());
+        payment.setOrderCode(orderCode);
 
         try {
             payment.setResponseData(objectMapper.writeValueAsString(response));
@@ -145,5 +149,24 @@ public class PaymentService implements IPaymentService {
 
             paymentRepository.save(payment);
         }
+    }
+
+    @Override
+    @Transactional
+    public void markPaymentCanceled(String orderId) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found for order id: " + orderId));
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS || payment.getStatus() == PaymentStatus.CANCELED) {
+            return;
+        }
+
+        payment.setStatus(PaymentStatus.CANCELED);
+        paymentRepository.save(payment);
+    }
+
+    private long generateOrderCode(String orderId) {
+        long hashSuffix = Math.floorMod(orderId.hashCode(), 1000);
+        return System.currentTimeMillis() * 1000 + hashSuffix;
     }
 }

@@ -8,6 +8,7 @@ import java.sql.Blob;
 import java.util.List;
 
 import com.ecommerce.sshop.dto.image.ImageDto;
+import com.ecommerce.sshop.exception.image.ImageNotFoundException;
 import com.ecommerce.sshop.model.image.Image;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.image.IImageService;
@@ -68,17 +69,13 @@ class ImageControllerTest {
     @Test
     @DisplayName("Update image successfully (Admin)")
     void updateImage_Success() {
-        // 1. Arrange mock entities and DTO response structures
-        Image mockImage = new Image();
         MockMultipartFile file = new MockMultipartFile("file", "update.jpg", "image/jpeg", "new-data".getBytes());
         
         ImageDto mockImageDto = new ImageDto();
         mockImageDto.setId(imageId);
         mockImageDto.setFileName("update.jpg");
-        mockImageDto.setDownloadUrl("/api/v1/images/image/download/" + imageId);
+        mockImageDto.setDownloadUrl("/api/v1/images/" + imageId);
 
-        when(imageService.getImageById(imageId)).thenReturn(mockImage);
-        // Replace doNothing() with when().thenReturn() to support the new ImageDto return type
         when(imageService.updateImage(file, imageId)).thenReturn(mockImageDto);
 
         // 2. Act
@@ -98,18 +95,14 @@ class ImageControllerTest {
     @DisplayName("Update image failed when record is not found (Admin)")
     void updateImage_NotFound() {
         MockMultipartFile file = new MockMultipartFile("file", "update.jpg", "image/jpeg", "new-data".getBytes());
-        when(imageService.getImageById(imageId)).thenReturn(null);
-
-        ResponseEntity<ApiResponse> response = imageController.updateImage(imageId, file);
-
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        when(imageService.updateImage(file, imageId))
+                .thenThrow(new ImageNotFoundException("Image not found with id: !!" + imageId));
+        assertThrows(ImageNotFoundException.class, () -> imageController.updateImage(imageId, file));
     }
 
     @Test
     @DisplayName("Delete image successfully (Admin)")
     void deleteImage_Success() {
-        Image mockImage = new Image();
-        when(imageService.getImageById(imageId)).thenReturn(mockImage);
         doNothing().when(imageService).deleteImageById(imageId);
 
         ResponseEntity<ApiResponse> response = imageController.deleteImage(imageId);

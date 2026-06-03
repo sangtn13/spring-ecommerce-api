@@ -12,4 +12,6 @@ public interface IOrderRepository extends JpaRepository<Order, String> {
     List<Order> findByUserId(String userId);
 
     Page<Order> findByUserId(String userId, Pageable pageable);
+
+    java.util.Optional<Order> findByIdAndUserId(String orderId, String userId);
 }

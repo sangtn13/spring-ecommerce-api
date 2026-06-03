@@ -127,4 +127,18 @@ class PaymentControllerTest {
         assertEquals("Webhook verification failed.", exception.getMessage());
         Mockito.verify(paymentService, Mockito.times(1)).handlePayOSWebhook(any());
     }
+
+    @Test
+    void markPaymentCanceled_Success_ShouldReturnOk() {
+        Mockito.doNothing().when(paymentService).markPaymentCanceled(eq(orderId));
+
+        ResponseEntity<ApiResponse> responseEntity = paymentController.markPaymentCanceled(orderId);
+
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertNotNull(responseEntity.getBody());
+        assertEquals("Payment marked as canceled successfully!", responseEntity.getBody().getMessage());
+        assertEquals("Canceled", responseEntity.getBody().getData());
+        Mockito.verify(paymentService, Mockito.times(1)).markPaymentCanceled(eq(orderId));
+    }
 }

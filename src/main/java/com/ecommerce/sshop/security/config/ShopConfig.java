@@ -31,10 +31,9 @@ public class ShopConfig {
     private final ShopUserDetailsService userDetailsService;
     private final JwtAuthEntryPoint unauthorizedHandler;
     private static final List<String> SECURED_URLS = List.of("/api/v1/users/**", "/api/v1/orders/**",
-            "/api/v1/carts/**",
-            "/api/v1/cart-items/**", "/api/v1/images/**");
+            "/api/v1/cart", "/api/v1/cart/**", "/api/v1/images/**", "/api/v1/payments/orders/**");
     private static final List<String> UNSECURED_URLS = List.of("/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html",
-            "/api-docs/**", "/v3/api-docs/**", "/api/v1/products/**", "/api/v1/categories/**", "/api/v1/payments/payos-webhook");
+            "/api-docs/**", "/v3/api-docs/**", "/api/v1/products/**", "/api/v1/categories/**", "/api/v1/brands/**", "/api/v1/payments/payos-webhook");
 
     @Bean
     public PasswordEncoder passwordEncoder() {

@@ -4,4 +4,6 @@ public interface IPaymentService {
     String createOrderPaymentLink(String orderId);
 
     void handlePayOSWebhook(Object webhookBody);
+
+    void markPaymentCanceled(String orderId);
 }

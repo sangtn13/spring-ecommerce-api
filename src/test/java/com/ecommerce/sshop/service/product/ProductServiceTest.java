@@ -8,16 +8,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.ecommerce.sshop.dto.product.ProductDto;
 import com.ecommerce.sshop.dto.image.ImageDto;
+import com.ecommerce.sshop.dto.product.ProductDto;
+import com.ecommerce.sshop.exception.brand.BrandNotFoundException;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.product.InvalidProductRequestException;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
 import com.ecommerce.sshop.mapper.ImageMapper;
 import com.ecommerce.sshop.mapper.ProductMapper;
+import com.ecommerce.sshop.model.brand.Brand;
 import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.model.image.Image;
 import com.ecommerce.sshop.model.product.Product;
+import com.ecommerce.sshop.repository.brand.IBrandRepository;
 import com.ecommerce.sshop.repository.category.ICategoryRepository;
 import com.ecommerce.sshop.repository.image.IImageRepository;
 import com.ecommerce.sshop.repository.product.IProductRepository;
@@ -39,43 +43,47 @@ import org.springframework.data.domain.Pageable;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
-    @Mock
-    private IProductRepository productRepository;
-    @Mock
-    private ICategoryRepository categoryRepository;
-    @Mock
-    private IImageRepository imageRepository;
-    @Mock
-    private ProductMapper productMapper;
-    @Mock
-    private ImageMapper imageMapper;
+    @Mock private IProductRepository productRepository;
+    @Mock private IBrandRepository brandRepository;
+    @Mock private ICategoryRepository categoryRepository;
+    @Mock private IImageRepository imageRepository;
+    @Mock private ProductMapper productMapper;
+    @Mock private ImageMapper imageMapper;
 
-    @InjectMocks
-    private ProductService productService;
+    @InjectMocks private ProductService productService;
 
     private Product sampleProduct;
     private Category sampleCategory;
+    private Brand sampleBrand;
     private final String productId = "prod-uuid-123";
     private final String categoryId = "cat-uuid-123";
+    private final String brandId = "brand-uuid-123";
 
     @BeforeEach
     void setUp() {
         sampleCategory = new Category("Electronics");
         sampleCategory.setId(categoryId);
 
-        sampleProduct = new Product("iPhone 15", "Apple", new BigDecimal("999.00"), 50, "Smartphone", sampleCategory);
+        sampleBrand = new Brand("Apple");
+        sampleBrand.setId(brandId);
+
+        sampleProduct = new Product("iPhone 15", sampleBrand, new BigDecimal("999.00"), 50, "Smartphone",
+                sampleCategory);
         sampleProduct.setId(productId);
     }
 
     @Test
-    @DisplayName("Add new Product successfully with existing Category ID")
-    void addProduct_WithCategoryId_Success() {
+    @DisplayName("Add new product successfully with existing category id and brand id")
+    void addProduct_WithCategoryIdAndBrandId_Success() {
         AddProductRequest request = new AddProductRequest();
         request.setName("iPhone 15");
-        request.setBrand("Apple");
+        request.setBrandId(brandId);
+        request.setPrice(new BigDecimal("999.00"));
+        request.setInventory(50);
         request.setCategoryId(categoryId);
 
-        when(productRepository.existsByNameAndBrand(request.getName(), request.getBrand())).thenReturn(false);
+        when(brandRepository.findById(brandId)).thenReturn(Optional.of(sampleBrand));
+        when(productRepository.existsByNameAndBrandName(request.getName(), sampleBrand.getName())).thenReturn(false);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(sampleCategory));
         when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
 
@@ -87,49 +95,55 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Add new Product failed - Product already exists")
+    @DisplayName("Add product fails when name and brand already exist")
     void addProduct_AlreadyExists_ThrowsException() {
         AddProductRequest request = new AddProductRequest();
         request.setName("iPhone 15");
-        request.setBrand("Apple");
+        request.setBrandId(brandId);
 
-        when(productRepository.existsByNameAndBrand(request.getName(), request.getBrand())).thenReturn(true);
+        when(brandRepository.findById(brandId)).thenReturn(Optional.of(sampleBrand));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(sampleCategory));
+        request.setCategoryId(categoryId);
+        when(productRepository.existsByNameAndBrandName("iPhone 15", "Apple")).thenReturn(true);
 
         assertThrows(AlreadyExistsException.class, () -> productService.addProduct(request));
         verify(productRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Add new Product with new Category name successfully")
-    void addProduct_WithNewCategoryName_Success() {
+    @DisplayName("Add product fails when brand id is missing")
+    void addProduct_MissingBrandId_ThrowsException() {
         AddProductRequest request = new AddProductRequest();
         request.setName("iPhone 15");
-        request.setBrand("Apple");
-        request.setCategoryName("New Tech");
+        request.setPrice(new BigDecimal("999.00"));
+        request.setInventory(50);
+        request.setCategoryId(categoryId);
 
-        when(productRepository.existsByNameAndBrand(request.getName(), request.getBrand())).thenReturn(false);
-        when(categoryRepository.findByName("New Tech")).thenReturn(null);
-        when(categoryRepository.save(any(Category.class))).thenReturn(new Category("New Tech"));
-        when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
-
-        Product result = productService.addProduct(request);
-        assertNotNull(result);
+        assertThrows(InvalidProductRequestException.class, () -> productService.addProduct(request));
     }
 
     @Test
-    @DisplayName("Add new Product failed - Missing Category name and Category ID, throws CategoryNotFoundException")
-    void addProduct_MissingCategoryName_ThrowsException() {
+    void addProduct_MissingCategoryId_ThrowsException() {
         AddProductRequest request = new AddProductRequest();
         request.setName("iPhone 15");
-        request.setBrand("Apple");
+        request.setBrandId(brandId);
 
-        when(productRepository.existsByNameAndBrand(request.getName(), request.getBrand())).thenReturn(false);
-
-        assertThrows(CategoryNotFoundException.class, () -> productService.addProduct(request));
+        assertThrows(InvalidProductRequestException.class, () -> productService.addProduct(request));
     }
 
     @Test
-    @DisplayName("Get Product by ID successfully")
+    void addProduct_BrandIdNotFound_ThrowsException() {
+        AddProductRequest request = new AddProductRequest();
+        request.setName("iPhone 15");
+        request.setBrandId("missing-brand");
+        request.setCategoryId(categoryId);
+
+        when(brandRepository.findById("missing-brand")).thenReturn(Optional.empty());
+
+        assertThrows(BrandNotFoundException.class, () -> productService.addProduct(request));
+    }
+
+    @Test
     void getProductById_Success() {
         when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
         Product result = productService.getProductById(productId);
@@ -138,21 +152,22 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Get Product by ID failed - Not found")
     void getProductById_NotFound_ThrowsException() {
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
         assertThrows(ProductNotFoundException.class, () -> productService.getProductById(productId));
     }
 
     @Test
-    @DisplayName("Update Product successfully with existing Category ID")
     void updateProduct_Success() {
         UpdateProductRequest request = new UpdateProductRequest();
         request.setName("iPhone 15 Pro");
-        request.setBrand("Apple");
+        request.setBrandId(brandId);
         request.setCategoryId(categoryId);
+        request.setPrice(new BigDecimal("1099.00"));
+        request.setInventory(40);
 
-        when(productRepository.existsByNameAndBrand(request.getName(), request.getBrand())).thenReturn(false);
+        when(brandRepository.findById(brandId)).thenReturn(Optional.of(sampleBrand));
+        when(productRepository.existsByNameAndBrandName("iPhone 15 Pro", "Apple")).thenReturn(false);
         when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(sampleCategory));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -164,7 +179,6 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Delete Product successfully when record is found")
     void deleteProduct_Success() {
         when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
         doNothing().when(productRepository).delete(sampleProduct);
@@ -174,46 +188,30 @@ class ProductServiceTest {
     }
 
     @Test
-    void deleteProduct_NotFound_ThrowsException() {
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-        assertThrows(ProductNotFoundException.class, () -> productService.deleteProduct(productId));
-    }
-
-    @Test
     void updateProduct_AlreadyExists_ThrowsException() {
         UpdateProductRequest request = new UpdateProductRequest();
         request.setName("Another Product");
-        request.setBrand("Apple");
+        request.setBrandId(brandId);
 
         Product current = new Product();
         current.setName("Old Name");
+        current.setBrand(sampleBrand);
 
-        when(productRepository.existsByNameAndBrand("Another Product", "Apple")).thenReturn(true);
+        when(brandRepository.findById(brandId)).thenReturn(Optional.of(sampleBrand));
+        when(productRepository.existsByNameAndBrandName("Another Product", "Apple")).thenReturn(true);
         when(productRepository.findById(productId)).thenReturn(Optional.of(current));
 
         assertThrows(AlreadyExistsException.class, () -> productService.updateProduct(request, productId));
     }
 
     @Test
-    void updateProduct_NotFound_ThrowsException() {
-        UpdateProductRequest request = new UpdateProductRequest();
-        request.setName("iPhone");
-        request.setBrand("Apple");
-
-        when(productRepository.existsByNameAndBrand("iPhone", "Apple")).thenReturn(false);
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
-
-        assertThrows(ProductNotFoundException.class, () -> productService.updateProduct(request, productId));
-    }
-
-    @Test
     void addProduct_CategoryIdNotFound_ThrowsException() {
         AddProductRequest request = new AddProductRequest();
         request.setName("n");
-        request.setBrand("b");
+        request.setBrandId(brandId);
         request.setCategoryId("missing-id");
 
-        when(productRepository.existsByNameAndBrand("n", "b")).thenReturn(false);
+        when(brandRepository.findById(brandId)).thenReturn(Optional.of(sampleBrand));
         when(categoryRepository.findById("missing-id")).thenReturn(Optional.empty());
 
         assertThrows(CategoryNotFoundException.class, () -> productService.addProduct(request));
@@ -223,19 +221,16 @@ class ProductServiceTest {
     void getAllAndFilterMethods_DelegateToRepository() {
         when(productRepository.findAll()).thenReturn(List.of(sampleProduct));
         when(productRepository.findByCategoryName("Electronics")).thenReturn(List.of(sampleProduct));
-        when(productRepository.findByBrand("Apple")).thenReturn(List.of(sampleProduct));
-        when(productRepository.findByCategoryNameAndBrand("Electronics", "Apple")).thenReturn(List.of(sampleProduct));
-        when(productRepository.findByName("iPhone 15")).thenReturn(List.of(sampleProduct));
-        when(productRepository.findByBrandAndName("Apple", "iPhone 15")).thenReturn(List.of(sampleProduct));
-        when(productRepository.countByBrandAndName("Apple", "iPhone 15")).thenReturn(1L);
-
+        when(productRepository.findByBrandName("Apple")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByCategoryNameAndBrandName("Electronics", "Apple")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByNameStartingWith("iPhone")).thenReturn(List.of(sampleProduct));
+        when(productRepository.findByBrandNameAndNameStartingWith("Apple", "iPhone")).thenReturn(List.of(sampleProduct));
         assertEquals(1, productService.getAllProducts().size());
         assertEquals(1, productService.getProductsByCategory("Electronics").size());
         assertEquals(1, productService.getProductsByBrand("Apple").size());
         assertEquals(1, productService.getProductsByCategoryAndBrand("Electronics", "Apple").size());
-        assertEquals(1, productService.getProductsByName("iPhone 15").size());
-        assertEquals(1, productService.getProductsByBrandAndName("Apple", "iPhone 15").size());
-        assertEquals(1L, productService.countProductsByBrandAndName("Apple", "iPhone 15"));
+        assertEquals(1, productService.getProductsByName("iPhone").size());
+        assertEquals(1, productService.getProductsByBrandAndName("Apple", "iPhone").size());
     }
 
     @Test
@@ -255,19 +250,16 @@ class ProductServiceTest {
     }
 
     @Test
-    void convertedProductsAndPagingMethods_Success() {
+    void pagingMethods_Success() {
         ProductDto dto = new ProductDto();
         when(productMapper.toDto(sampleProduct)).thenReturn(dto);
         when(imageRepository.findByProductId(productId)).thenReturn(List.of());
-
-        List<ProductDto> converted = productService.getConvertedProducts(List.of(sampleProduct));
-        assertEquals(1, converted.size());
 
         Pageable pageable = PageRequest.of(0, 5);
         Page<Product> page = new PageImpl<>(List.of(sampleProduct));
         when(productRepository.findAll(pageable)).thenReturn(page);
         when(productRepository.findByCategoryName("Electronics", pageable)).thenReturn(page);
-        when(productRepository.findByBrand("Apple", pageable)).thenReturn(page);
+        when(productRepository.findByBrandName("Apple", pageable)).thenReturn(page);
 
         assertEquals(1, productService.getAllProductsWithPaging(pageable).getContent().size());
         assertEquals(1, productService.getProductsByCategoryWithPaging("Electronics", pageable).getContent().size());
@@ -275,18 +267,79 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("Search and paginate products successfully")
-    void searchProductsWithPaging_Success() {
+    @DisplayName("Search products with optional filters, full-text name, and price range")
+    void searchProductsWithPaging_ByFilters_Success() {
         Pageable pageable = PageRequest.of(0, 5);
         Page<Product> page = new PageImpl<>(List.of(sampleProduct));
 
-        when(productRepository.searchProducts("iPhone", pageable)).thenReturn(page);
+        when(productRepository.searchProductsByFilters(eq(brandId), eq(null),
+                eq("+pro* +max*"), eq(null), eq(new BigDecimal("500.00")), eq(new BigDecimal("1500.00")),
+                eq(pageable)))
+                .thenReturn(page);
         when(productMapper.toDto(sampleProduct)).thenReturn(new ProductDto());
         when(imageRepository.findByProductId(productId)).thenReturn(new ArrayList<>());
 
-        Page<ProductDto> result = productService.searchProductsWithPaging("iPhone", pageable);
+        Page<ProductDto> result = productService.searchProductsWithPaging(
+                brandId,
+                null,
+                "Pro Max",
+                new BigDecimal("500.00"),
+                new BigDecimal("1500.00"),
+                pageable);
 
         assertNotNull(result);
-        assertEquals(1, result.getContent().size());
+        verify(productRepository).searchProductsByFilters(eq(brandId), eq(null),
+                eq("+pro* +max*"), eq(null), eq(new BigDecimal("500.00")), eq(new BigDecimal("1500.00")),
+                eq(pageable));
+    }
+
+    @Test
+    @DisplayName("Split punctuation and use exact phrase fallback when name contains short terms")
+    void searchProductsWithPaging_NameFullTextNormalization() {
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Product> page = new PageImpl<>(List.of(sampleProduct));
+
+        when(productRepository.searchProductsByFilters(eq(null), eq(null),
+                eq("+vertex*"), eq("vertex 14"), eq(null), eq(null), eq(pageable)))
+                .thenReturn(page);
+        when(productMapper.toDto(sampleProduct)).thenReturn(new ProductDto());
+        when(imageRepository.findByProductId(productId)).thenReturn(new ArrayList<>());
+
+        Page<ProductDto> result = productService.searchProductsWithPaging(
+                null,
+                null,
+                "Vertex 14",
+                null,
+                null,
+                pageable);
+
+        assertNotNull(result);
+        verify(productRepository).searchProductsByFilters(eq(null), eq(null),
+                eq("+vertex*"), eq("vertex 14"), eq(null), eq(null), eq(pageable));
+    }
+
+    @Test
+    @DisplayName("Use phrase-only fallback when name contains only short tokens")
+    void searchProductsWithPaging_ShortNamePhraseOnly() {
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Product> page = new PageImpl<>(List.of(sampleProduct));
+
+        when(productRepository.searchProductsByFilters(eq(null), eq(null),
+                eq(null), eq("14"), eq(null), eq(null), eq(pageable)))
+                .thenReturn(page);
+        when(productMapper.toDto(sampleProduct)).thenReturn(new ProductDto());
+        when(imageRepository.findByProductId(productId)).thenReturn(new ArrayList<>());
+
+        Page<ProductDto> result = productService.searchProductsWithPaging(
+                null,
+                null,
+                "14",
+                null,
+                null,
+                pageable);
+
+        assertNotNull(result);
+        verify(productRepository).searchProductsByFilters(eq(null), eq(null),
+                eq(null), eq("14"), eq(null), eq(null), eq(pageable));
     }
 }

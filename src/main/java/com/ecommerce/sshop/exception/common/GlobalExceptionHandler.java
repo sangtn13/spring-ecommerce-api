@@ -1,16 +1,25 @@
 package com.ecommerce.sshop.exception.common;
 
+import com.ecommerce.sshop.exception.auth.InvalidCredentialsException;
+import com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException;
+import com.ecommerce.sshop.exception.auth.UserLockedAuthException;
+import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.carts.CartItemNotFoundException;
 import com.ecommerce.sshop.exception.carts.CartNotFoundException;
 import com.ecommerce.sshop.exception.carts.QuantityInvalidException;
 import com.ecommerce.sshop.exception.carts.EmptyCartException;
+import com.ecommerce.sshop.exception.brand.BrandNotFoundException;
 import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.exception.order.OrderNotPendingException;
 import com.ecommerce.sshop.exception.order.OrderHasBeenPaidException;
 import com.ecommerce.sshop.exception.order.StatusInvalidException;
 import com.ecommerce.sshop.exception.order.InsufficientStockException;
+import com.ecommerce.sshop.exception.payment.PaymentNotFoundException;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.exception.image.ImageNotFoundException;
+import com.ecommerce.sshop.exception.product.InvalidProductRequestException;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
+import com.ecommerce.sshop.exception.user.InvalidUserRequestException;
 import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.response.ApiResponse;
 
@@ -30,12 +39,29 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
+            InvalidCredentialsException.class,
+            InvalidRefreshTokenException.class
+    })
+    public ResponseEntity<ApiResponse> handleUnauthorizedException(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponse(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(UserLockedAuthException.class)
+    public ResponseEntity<ApiResponse> handleLockedException(UserLockedAuthException ex) {
+        return ResponseEntity.status(HttpStatus.LOCKED)
+                .body(new ApiResponse(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler({
             QuantityInvalidException.class,
             InsufficientStockException.class,
             EmptyCartException.class,
             StatusInvalidException.class,
             OrderNotPendingException.class,
-            OrderHasBeenPaidException.class
+            OrderHasBeenPaidException.class,
+            InvalidUserRequestException.class,
+            InvalidProductRequestException.class
     })
     public ResponseEntity<ApiResponse> handleBadRequestException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -44,8 +70,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             UserNotFoundException.class,
+            BrandNotFoundException.class,
+            CartItemNotFoundException.class,
             CartNotFoundException.class,
             ProductNotFoundException.class,
+            PaymentNotFoundException.class,
             CategoryNotFoundException.class,
             OrderNotFoundException.class,
             ImageNotFoundException.class

@@ -16,7 +16,9 @@ public interface IOrderService {
 
     List<OrderDto> getUserOrders(String userId);
 
-    Order updateOrderStatus(String orderId, OrderStatus status);
+    Order updateOrderStatus(String orderId, String status);
+
+    Order cancelUserOrder(String userId, String orderId);
 
     OrderDto convertToDto(Order order);
 

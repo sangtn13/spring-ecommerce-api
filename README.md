@@ -5,339 +5,263 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-blue.svg)](https://www.mysql.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A simple eCommerce REST API built with Spring Boot, providing essential features for an online shopping system including product management, user management, shopping cart, and order processing.
+SShop is a Spring Boot REST API for an eCommerce system. It provides authentication, user management, product catalog management, categories, cart operations, order processing, image handling, and PayOS payment integration.
 
 ## 📋 Table of Contents
 
 - [Key Features](#-key-features)
 - [Tech Stack](#-tech-stack)
+- [System Requirements](#-system-requirements)
 - [Installation & Setup](#-installation--setup)
 - [Security Configuration](#-security-configuration)
-- [API Endpoints](#-api-endpoints)
+- [API Documentation](#-api-documentation)
 - [Project Structure](#-project-structure)
 - [Database](#-database)
 - [Testing](#-testing)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
 
 ## 🚀 Key Features
 
 ### 🔐 Authentication & Authorization
-- **JWT Authentication**: User authentication using JSON Web Token
-- **Role-based Access Control**: Permission management based on roles (User, Admin)
-- **Password Encryption**: Password hashing using BCrypt
-- **Secure API Endpoints**: Protection of sensitive endpoints
+- JWT authentication with access and refresh tokens
+- Role-based access control with `User`, `Admin`, and `Manager`
+- Protected endpoints with Spring Security
+- Account lock support
 
 ### 👤 User Management
 - User registration and login
-- Profile information updates
-- Role and permission management
-- Automatic sample data initialization (Admin, Users)
+- Current profile retrieval
+- Admin user creation and update
+- Role update, lock, and unlock actions
 
 ### 📦 Product Management
-- CRUD operations for products
-- Product categorization
-- Product search by name, brand, category
-- Product image management
-- Inventory tracking
+- Product CRUD operations
+- Product filtering by brand ID, category ID, product name full-text search, and price range
+- Product writes reference existing brand and category records by ID
+- Brand separation from product rows for safer catalog growth
+- Product inventory tracking
 
-### 🛒 Shopping Cart & Orders
-- Add/remove/update products in cart
-- Automatic price calculation
-- Order placement and status tracking
-- User purchase history
+### 🏷️ Category & Brand Management
+- Category CRUD operations
+- Category lookup by ID or name
+- Pagination support for category listing
+- Brand CRUD operations
+- Brand lookup by ID or name
+- Pagination support for brand listing
 
-### 🏷️ Category Management
-- Add/edit/delete product categories
-- Link products with categories
+### 🛒 Cart & Orders
+- Add, update, and remove cart items
+- Cart item update/remove uses `cartItemId` semantics on `/api/v1/cart/items/{itemId}`
+- Retrieve current cart and total amount
+- Place orders from the current cart
+- Track current user's order history
+- Cancel the current user's own order when the current status allows transition to `CANCELED`
+- Update order status for admin and manager roles
 
 ### 🖼️ Image Management
-- Upload and store product images
-- Image download functionality
-- Update and delete images
+- Upload multiple product images
+- Download stored images
+- Update or delete existing images
+
+### 💳 Payments
+- Create PayOS checkout links
+- Receive PayOS webhook callbacks
+- Mark a payment as canceled from the frontend when the user exits the PayOS flow
+- Recreate a fresh PayOS checkout link after a canceled payment instead of reusing an old processed link
 
 ## 💻 Tech Stack
 
 ### Backend Framework
-- **Spring Boot 3.5.6** - Core framework
-- **Spring Security** - Authentication and authorization
-- **Spring Data JPA** - Object-Relational Mapping
-- **Spring Validation** - Input data validation
+- **Spring Boot 3.5.6**
+- **Spring Security**
+- **Spring Data JPA**
+- **Spring Validation**
 
-### Database
-- **MySQL 8.0+** - Primary database
-- **Hibernate** - ORM framework
+### Database & Persistence
+- **MySQL 8.0+**
+- **Hibernate**
+- **Flyway**
 
-### Security & Authentication
-- **JWT (JSON Web Tokens)** - Token-based authentication
-- **BCrypt** - Password hashing
-- **JJWT** - JWT implementation for Java
+### API & Documentation
+- **springdoc OpenAPI**
+- **Swagger UI**
 
 ### Utilities
-- **Lombok** - Reduce boilerplate code
-- **ModelMapper** - Object mapping
-- **Maven** - Dependency management
+- **Lombok**
+- **MapStruct**
+- **Maven Wrapper**
 
-### Development Tools
-- **Java 17** - Programming language
-- **Maven Wrapper** - Build tool
-- **Spring Boot DevTools** - Development utilities
+## 🧰 System Requirements
+
+- **Java 17** or higher
+- **MySQL 8.0+**
+- **Maven 3.6+** or the included Maven Wrapper
 
 ## 🔧 Installation & Setup
 
-### System Requirements
-- **Java 17** or higher
-- **MySQL 8.0+**
-- **Maven 3.6+** (or use the included Maven Wrapper)
+### 1. Clone the repository
 
-### 1. Clone repository
 ```bash
 git clone https://github.com/sangtn13/spring-ecommerce-api.git
-cd sshop
+cd spring-ecommerce-api
 ```
 
-### 2. Database Setup
-Create MySQL database:
+### 2. Create the application properties file
+
+Copy `src/main/resources/application.properties.template` to `src/main/resources/application.properties`.
+
+### 3. Configure the application
+
+Update the values in `src/main/resources/application.properties`:
+
+```properties
+server.port=5050
+
+spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name?connectionTimeZone=Asia/Ho_Chi_Minh
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+api.prefix=/api/v1
+
+sshop.app.jwtSecret=PLEASE_GENERATE_YOUR_OWN_JWT_SECRET_KEY_HERE
+sshop.app.jwtExpirationMs=3600000
+sshop.app.refreshTokenExpirationMs=604800000
+
+sshop.seed.user.password=
+sshop.seed.admin.password=
+
+payos.client-id=
+payos.api-key=
+payos.checksum-key=
+payos.return-url-base=
+payos.cancel-url-base=
+```
+
+### 4. Create the database
+
+Example:
+
 ```sql
 CREATE DATABASE sshop_db;
 ```
 
-### 3. Application Configuration
-Edit `src/main/resources/application.properties` with your database information if needed:
-```properties
-# Database configuration (default setup)
-spring.datasource.url=jdbc:mysql://localhost:3306/sshop_db?allowPublicKeyRetrieval=true&useSSL=false
-spring.datasource.username=root
-spring.datasource.password=admin
+Then point `spring.datasource.url` to that database.
 
-# JWT Configuration (already configured with a default secret)
-sshop.app.jwtSecret=g0qlJwfjNUHoDn4YOos9jItP5/srQ3QXbPwJjzQFfyTTKpVH+NRLFSGgErlYp3KnThZ+tXBmHms5ysdmk8WL6g==
-sshop.app.jwtExpirationMs=3600000
+### 5. Optional seed accounts
+
+Seed accounts are created **only if** you provide values for:
+
+- `sshop.seed.user.password`
+- `sshop.seed.admin.password`
+
+If configured, the application can create:
+
+- `admin@gmail.com` with role `Admin`
+- `user1@gmail.com` to `user5@gmail.com` with role `User`
+
+### 6. Run the application
+
+#### Using Maven Wrapper
+
+```bash
+.\mvnw.cmd spring-boot:run
 ```
 
-**Note:** The application is pre-configured for local development. Just make sure your MySQL credentials match (default: root/admin).
+#### Build and run the JAR
 
-### 4. Build and Run Application
-
-#### Using Maven Wrapper (Recommended):
 ```bash
-# Build the application
-./mvnw clean install    # Linux/Mac
-.\mvnw.cmd clean install    # Windows
-
-# Run the application
+.\mvnw.cmd clean install
 java -jar target/sshop-0.0.1-SNAPSHOT.jar
 ```
 
-#### Or run directly with Maven:
-```bash
-./mvnw spring-boot:run    # Linux/Mac
-.\mvnw.cmd spring-boot:run    # Windows
+The application runs by default at:
+
+```text
+http://localhost:5050
 ```
 
-The application will run at: `http://localhost:5050`
+### 7. Optional Docker services
+
+The repository includes `docker-compose.yaml` for:
+
+- MySQL
+- SonarQube
+- PostgreSQL for SonarQube
+
+Before running Docker Compose, copy `.env.example` to `.env` and update the values.
 
 ## 🔒 Security Configuration
 
-### Default Accounts
-The application automatically creates sample accounts on startup:
+### Public endpoints
 
-**Admin Account:**
-- Email: `admin@gmail.com`
-- Password: `123456`
-- Role: Admin
+- `/api/v1/auth/**`
+- `/api/v1/products/**`
+- `/api/v1/categories/**`
+- `/api/v1/brands/**`
+- `/api/v1/payments/payos-webhook`
 
-**User Accounts:**
-- Email: `user1@gmail.com` to `user5@gmail.com`
-- Password: `1234561` to `1234565` (respectively)
-- Role: User
+### Authenticated endpoints
 
-### Production Security
-For production environments, please:
-1. Change all default passwords
-2. Use strong JWT secret key
-3. Configure HTTPS
-4. Set `spring.jpa.hibernate.ddl-auto=validate`
+- `/api/v1/users/**`
+- `/api/v1/orders/**`
+- `/api/v1/cart`
+- `/api/v1/cart/**`
+- `/api/v1/images/**`
+- `/api/v1/payments/orders/**`
 
-See [SECURITY.md](SECURITY.md) for detailed information
+### Role-restricted endpoints
 
-## 📚 API Endpoints
+- `Admin` manages users
+- `Admin` and `Manager` manage products, categories, images, and order status updates
 
-### Authentication
-```http
-POST /api/v1/auth/login
-```
+## 📚 API Documentation
 
-### Users
-```http
-GET    /api/v1/users/{userId}        # Get user information
-POST   /api/v1/users                # Create new user
-PUT    /api/v1/users/{userId}       # Update user
-DELETE /api/v1/users/{userId}       # Delete user
-```
-
-### Products
-```http
-GET    /api/v1/products                           # Get all products
-GET    /api/v1/products/{id}                      # Get product by ID
-POST   /api/v1/products                          # Add new product (Admin)
-PUT    /api/v1/products/{id}                     # Update product (Admin)
-DELETE /api/v1/products/{id}                     # Delete product (Admin)
-GET    /api/v1/products/by-category/{category}   # Get products by category
-GET    /api/v1/products/by-brand                 # Get products by brand
-GET    /api/v1/products/name/{name}              # Search products by name
-```
-
-### Categories
-```http
-GET    /api/v1/categories           # Get all categories
-POST   /api/v1/categories          # Create new category
-GET    /api/v1/categories/{id}     # Get category by ID
-PUT    /api/v1/categories/{id}     # Update category
-DELETE /api/v1/categories/{id}     # Delete category
-```
-
-### Cart & Cart Items
-```http
-GET    /api/v1/carts/{cartId}                    # Get cart
-DELETE /api/v1/carts/{cartId}/clear             # Clear cart
-POST   /api/v1/cart-items/add                   # Add item to cart
-PUT    /api/v1/cart-items/{cartId}/update/{itemId}  # Update item quantity
-DELETE /api/v1/cart-items/{cartId}/remove/{itemId}  # Remove item from cart
-```
-
-### Orders
-```http
-POST /api/v1/orders?userId={userId}      # Create order
-GET  /api/v1/orders/{orderId}           # Get order details
-GET  /api/v1/orders/user/{userId}       # Get user orders
-```
-
-### Images
-```http
-POST /api/v1/images/upload                    # Upload images
-GET  /api/v1/images/download/{imageId}       # Download image
-PUT  /api/v1/images/image/{imageId}/update   # Update image
-DELETE /api/v1/images/image/{imageId}/delete # Delete image
-```
-
-### Swagger API Documentation
-After running the application, you can access Swagger UI at:
-- **Swagger UI**: `http://localhost:5050/swagger-ui.html`
-- **API Docs**: `http://localhost:5050/api-docs`
+- API reference: `FRONTEND_API.md`
+- Swagger UI: `http://localhost:5050/swagger-ui.html`
+- OpenAPI docs: `http://localhost:5050/api-docs`
 
 ## 🏗️ Project Structure
 
-```
+```text
 src/
 ├── main/
 │   ├── java/com/ecommerce/sshop/
-│   │   ├── controller/          # REST Controllers
-│   │   ├── service/             # Business Logic Layer
-│   │   ├── repository/          # Data Access Layer
-│   │   ├── model/              # Entity Classes
-│   │   ├── dto/                # Data Transfer Objects
-│   │   ├── request/            # Request DTOs
-│   │   ├── response/           # Response DTOs
-│   │   ├── exception/          # Custom Exceptions
-│   │   ├── security/           # Security Configuration
-│   │   ├── enums/             # Enum Classes
-│   │   ├── data/              # Data Initialization
+│   │   ├── controller/          # REST controllers
+│   │   ├── service/             # Business logic
+│   │   ├── repository/          # Data access layer
+│   │   ├── model/               # Entities
+│   │   ├── dto/                 # Response/data transfer models
+│   │   ├── request/             # Request payload models
+│   │   ├── response/            # Common response wrappers
+│   │   ├── exception/           # Exception handling
+│   │   ├── security/            # Security configuration
+│   │   ├── enums/               # Enums
+│   │   ├── data/                # Data initialization
 │   │   └── SshopApplication.java
 │   └── resources/
-│       ├── application.properties
-│       ├── application-local.properties
-│       └── application-production.properties.template
-└── test/                       # Test Classes
+│       ├── application.properties.template
+│       └── db/migration/
+└── test/
 ```
 
 ## 🗄️ Database
 
-### ERD (Entity Relationship Diagram)
-```
-Users ←→ Carts ←→ CartItems ←→ Products
-  ↓                              ↑
-Orders ←→ OrderItems              │
-                                 │
-                           Categories
-                                 │
-                              Images
-```
+### Main areas
 
-### Main Tables:
-- **users**: User information
-- **roles**: User roles
-- **user_roles**: Users-roles junction table
-- **products**: Product information
-- **categories**: Product categories
-- **images**: Product images
-- **carts**: Shopping carts
-- **cart_items**: Items in shopping cart
-- **orders**: Orders
-- **order_items**: Items in orders
+- **users / roles**: authentication and authorization
+- **brands / products / categories / images**: product catalog
+- **carts / cart_items**: shopping cart state
+- **orders / order_items / payments**: checkout and payment lifecycle
+
+### Notes
+
+- Flyway migrations are stored in `src/main/resources/db/migration`
+- JPA timezone is configured for `Asia/Ho_Chi_Minh`
 
 ## 🧪 Testing
 
-Run unit tests:
+Run tests with:
+
 ```bash
-./mvnw test
+.\mvnw.cmd test
 ```
-
-Run integration tests:
-```bash
-./mvnw verify
-```
-
-## 🚀 Deployment
-
-### Production Deployment
-1. Create `application-production.properties` file
-2. Configure production environment variables
-3. Build production JAR:
-```bash
-./mvnw clean package -Pprod
-```
-4. Run with production profile:
-```bash
-java -jar target/sshop-0.0.1-SNAPSHOT.jar --spring.profiles.active=production
-```
-
-### Docker Deployment (Optional)
-```dockerfile
-FROM openjdk:17-jdk-slim
-COPY target/sshop-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 5050
-ENTRYPOINT ["java","-jar","/app.jar"]
-```
-
-## 📝 Important Notes
-
-1. **Security**: Always change JWT secret key and database credentials in production
-2. **CORS**: Configure CORS appropriately for frontend domain
-3. **Rate Limiting**: Consider implementing rate limiting for production
-4. **Monitoring**: Add monitoring and logging for production environment
-5. **Backup**: Set up backup strategy for database
-
-## 🤝 Contributing
-
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is distributed under the MIT License. See `LICENSE` file for more information.
-
-## 👨‍💻 Author
-
-**Sang Tran** - [GitHub](https://github.com/sangtn13)
-
-## 📞 Contact
-
-If you have any questions, please create an issue or contact via email.
-
----
-
-⭐ **If this project is helpful to you, don't forget to star the repository!** ⭐

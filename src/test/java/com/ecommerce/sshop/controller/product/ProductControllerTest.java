@@ -3,7 +3,7 @@ package com.ecommerce.sshop.controller.product;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Collections;
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.ecommerce.sshop.dto.product.ProductDto;
@@ -29,10 +29,8 @@ import org.springframework.http.ResponseEntity;
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
 
-    @Mock
-    private IProductService productService;
-    @InjectMocks
-    private ProductController productController;
+    @Mock private IProductService productService;
+    @InjectMocks private ProductController productController;
 
     private Product sampleProduct;
     private ProductDto sampleProductDto;
@@ -55,15 +53,49 @@ class ProductControllerTest {
         Page<ProductDto> page = new PageImpl<>(List.of(sampleProductDto));
         when(productService.getAllProductsWithPaging(any(Pageable.class))).thenReturn(page);
 
-        ResponseEntity<ApiResponse> response = productController.getAllProducts(1, 5, "id", "asc");
+        ResponseEntity<ApiResponse> response = productController.getProducts(
+                null, null, null, null, null, 1, 5, "id", "asc");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
         assertEquals("Products retrieved successfully", response.getBody().getMessage());
     }
 
     @Test
-    @DisplayName("Get product by ID successfully")
+    @DisplayName("Get products by combined filters successfully")
+    void getProducts_ByFilters_Success() {
+        Page<ProductDto> page = new PageImpl<>(List.of(sampleProductDto));
+        when(productService.searchProductsWithPaging(eq("brand-1"), eq("cat-1"),
+                eq("iPhone"), eq(new BigDecimal("500")), eq(new BigDecimal("1500")), any(Pageable.class)))
+                .thenReturn(page);
+
+        ResponseEntity<ApiResponse> response = productController.getProducts("brand-1", "cat-1",
+                "iPhone", new BigDecimal("500"), new BigDecimal("1500"), 1, 5, "id", "asc");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Products retrieved successfully", response.getBody().getMessage());
+    }
+
+    @Test
+    void getProducts_InvalidPriceRange_ReturnsBadRequest() {
+        ResponseEntity<ApiResponse> response = productController.getProducts(
+                null, null, null, new BigDecimal("200"), new BigDecimal("100"), 1, 5, "id", "asc");
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("minPrice must be less than or equal to maxPrice", response.getBody().getMessage());
+    }
+
+    @Test
+    void getProducts_ByFilters_NotFound() {
+        when(productService.searchProductsWithPaging(eq("brand-1"), eq(null), eq(null), eq(null),
+                eq(null), any(Pageable.class))).thenReturn(Page.empty());
+
+        ResponseEntity<ApiResponse> response = productController.getProducts(
+                "brand-1", null, null, null, null, 1, 5, "id", "asc");
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
     void getProductById_Success() {
         when(productService.getProductById(productId)).thenReturn(sampleProduct);
         when(productService.convertToDto(sampleProduct)).thenReturn(sampleProductDto);
@@ -71,12 +103,10 @@ class ProductControllerTest {
         ResponseEntity<ApiResponse> response = productController.getProductById(productId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
         assertEquals(sampleProductDto, response.getBody().getData());
     }
 
     @Test
-    @DisplayName("Add new product successfully (Admin)")
     void addProduct_Success() {
         AddProductRequest request = new AddProductRequest();
         when(productService.addProduct(request)).thenReturn(sampleProduct);
@@ -89,7 +119,6 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Update product successfully (Admin)")
     void updateProduct_Success() {
         UpdateProductRequest request = new UpdateProductRequest();
         when(productService.updateProduct(request, productId)).thenReturn(sampleProduct);
@@ -102,7 +131,6 @@ class ProductControllerTest {
     }
 
     @Test
-    @DisplayName("Delete product successfully (Admin)")
     void deleteProduct_Success() {
         doNothing().when(productService).deleteProduct(productId);
 
@@ -112,146 +140,4 @@ class ProductControllerTest {
         assertEquals(productId, response.getBody().getData());
     }
 
-    @Test
-    @DisplayName("Get product by name successfully")
-    void getProductByName_Success() {
-        when(productService.getProductsByName("iPhone 15")).thenReturn(List.of(sampleProduct));
-        when(productService.getConvertedProducts(anyList())).thenReturn(List.of(sampleProductDto));
-
-        ResponseEntity<ApiResponse> response = productController.getProductByName("iPhone 15");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-    }
-
-    @Test
-    @DisplayName("Get product by name fails when name is invalid - Throws ProductNotFoundException")
-    void getProductByName_NotFound() {
-        // Gọi đúng hàm getProductsByName thay vì getProductsInverseName sai lệch trước
-        // đó
-        when(productService.getProductsByName("Unknown")).thenReturn(Collections.emptyList());
-
-        ResponseEntity<ApiResponse> response = productController.getProductByName("Unknown");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by brand and name successfully")
-    void getProductByBrandAndName_Success() {
-        when(productService.getProductsByBrandAndName("Apple", "iPhone 15")).thenReturn(List.of(sampleProduct));
-        when(productService.getConvertedProducts(anyList())).thenReturn(List.of(sampleProductDto));
-
-        ResponseEntity<ApiResponse> response = productController.getProductByBrandAndName("Apple", "iPhone 15");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by brand and name fails when name is invalid - Throws ProductNotFoundException")
-    void getProductByBrandAndName_NotFound() {
-        when(productService.getProductsByBrandAndName("Unknown", "Unknown")).thenReturn(Collections.emptyList());
-
-        ResponseEntity<ApiResponse> response = productController.getProductByBrandAndName("Unknown", "Unknown");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by category and brand successfully")
-    void getProductByCategoryAndBrand_Success() {
-        when(productService.getProductsByCategoryAndBrand("Electronics", "Apple")).thenReturn(List.of(sampleProduct));
-        when(productService.getConvertedProducts(anyList())).thenReturn(List.of(sampleProductDto));
-
-        ResponseEntity<ApiResponse> response = productController.getProductByCategoryAndBrand("Electronics", "Apple");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by category and brand fails when brand is invalid - Throws ProductNotFoundException")
-    void getProductByCategoryAndBrand_NotFound() {
-        when(productService.getProductsByCategoryAndBrand("Unknown", "Unknown")).thenReturn(Collections.emptyList());
-
-        ResponseEntity<ApiResponse> response = productController.getProductByCategoryAndBrand("Unknown", "Unknown");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by brand with paging successfully")
-    void findProductByBrandPaged_Success() {
-        Page<ProductDto> page = new PageImpl<>(List.of(sampleProductDto));
-        when(productService.getProductsByBrandWithPaging(eq("Apple"), any(Pageable.class))).thenReturn(page);
-
-        ResponseEntity<ApiResponse> response = productController.findProductByBrandPaged("Apple", 1, 5, "id", "asc");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by brand with paging fails when brand is invalid")
-    void findProductByBrandPaged_NotFound() {
-        when(productService.getProductsByBrandWithPaging(eq("Unknown"), any(Pageable.class))).thenReturn(Page.empty());
-
-        ResponseEntity<ApiResponse> response = productController.findProductByBrandPaged("Unknown", 1, 5, "id", "asc");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by category with paging successfully")
-    void getProductByCategoryPaged_Success() {
-        Page<ProductDto> page = new PageImpl<>(List.of(sampleProductDto));
-        when(productService.getProductsByCategoryWithPaging(eq("Electronics"), any(Pageable.class))).thenReturn(page);
-
-        ResponseEntity<ApiResponse> response = productController.getProductByCategoryPaged("Electronics", 1, 5, "id",
-                "asc");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by category with paging fails when category is invalid")
-    void getProductByCategoryPaged_NotFound() {
-        when(productService.getProductsByCategoryWithPaging(eq("Unknown"), any(Pageable.class)))
-                .thenReturn(Page.empty());
-
-        ResponseEntity<ApiResponse> response = productController.getProductByCategoryPaged("Unknown", 1, 5, "id",
-                "asc");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by keyword with paging successfully")
-    void searchProductsPaged_Success() {
-        Page<ProductDto> page = new PageImpl<>(List.of(sampleProductDto));
-        when(productService.searchProductsWithPaging(eq("iPhone"), any(Pageable.class))).thenReturn(page);
-
-        ResponseEntity<ApiResponse> response = productController.searchProductsPaged("iPhone", 1, 5, "id", "asc");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Get product by keyword with paging fails when keyword is invalid")
-    void searchProductsPaged_NotFound() {
-        when(productService.searchProductsWithPaging(eq("Unknown"), any(Pageable.class))).thenReturn(Page.empty());
-
-        ResponseEntity<ApiResponse> response = productController.searchProductsPaged("Unknown", 1, 5, "id", "asc");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("Count products by brand and name successfully (Admin)")
-    void getProductCountByBrandAndName_Success() {
-        when(productService.countProductsByBrandAndName("Apple", "iPhone 15")).thenReturn(10L);
-
-        ResponseEntity<ApiResponse> response = productController.getProductCountByBrandAndName("Apple", "iPhone 15");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(10L, response.getBody().getData());
-    }
 }

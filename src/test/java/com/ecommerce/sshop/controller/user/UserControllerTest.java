@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.ecommerce.sshop.dto.user.UserDto;
+import com.ecommerce.sshop.exception.user.InvalidUserRequestException;
+import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserLockRequest;
+import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.user.IUserService;
@@ -17,6 +21,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -51,6 +58,18 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Get users with paging successfully (Admin)")
+    void getUsers_Success() {
+        Page<UserDto> page = new PageImpl<>(java.util.List.of(mockUserDto));
+        when(userService.getAllUsersWithPaging(any(Pageable.class))).thenReturn(page);
+
+        ResponseEntity<ApiResponse> response = userController.getUsers(1, 5, "id", "asc");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Users retrieved successfully", response.getBody().getMessage());
+    }
+
+    @Test
     @DisplayName("Get user by ID successfully (Admin)")
     void getUserById_Success() {
         when(userService.getUserById(userId)).thenReturn(mockUser);
@@ -64,11 +83,8 @@ class UserControllerTest {
     @Test
     @DisplayName("Get user by ID failed when no result is returned (Admin)")
     void getUserById_NotFound() {
-        when(userService.getUserById(userId)).thenReturn(null);
-
-        ResponseEntity<ApiResponse> response = userController.getUserById(userId);
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        when(userService.getUserById(userId)).thenThrow(new UserNotFoundException("User not found with id: " + userId));
+        assertThrows(UserNotFoundException.class, () -> userController.getUserById(userId));
     }
 
     @Test
@@ -97,6 +113,32 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Update user role successfully (Admin)")
+    void updateUserRole_Success() {
+        UpdateUserRoleRequest request = new UpdateUserRoleRequest();
+        request.setRoles(java.util.Set.of("Manager", "User"));
+        when(userService.updateUserRole(request, userId)).thenReturn(mockUser);
+        when(userService.convertUserToDto(mockUser)).thenReturn(mockUserDto);
+
+        ResponseEntity<ApiResponse> response = userController.updateUserRole(userId, request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("User roles updated successfully", response.getBody().getMessage());
+    }
+
+    @Test
+    @DisplayName("Update user role fails when request body is missing")
+    void updateUserRole_NullRequest_ThrowsInvalidUserRequestException() {
+        when(userService.updateUserRole(null, userId))
+                .thenThrow(new InvalidUserRequestException("roles request body is required"));
+        InvalidUserRequestException exception = assertThrows(InvalidUserRequestException.class,
+                () -> userController.updateUserRole(userId, null));
+
+        assertEquals("roles request body is required", exception.getMessage());
+        verify(userService).updateUserRole(null, userId);
+    }
+
+    @Test
     @DisplayName("Delete user successfully (Admin)")
     void deleteUser_Success() {
         doNothing().when(userService).deleteUser(userId);
@@ -109,11 +151,14 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Lock user successfully (Admin)")
-    void lockUser_Success() {
-        when(userService.lockUser(userId)).thenReturn(mockUser);
+    void updateUserLock_Locked_Success() {
+        UpdateUserLockRequest request = new UpdateUserLockRequest();
+        request.setLocked(true);
+        mockUser.setAccountLocked(true);
+        when(userService.updateUserLock(request, userId)).thenReturn(mockUser);
         when(userService.convertUserToDto(mockUser)).thenReturn(mockUserDto);
 
-        ResponseEntity<ApiResponse> response = userController.lockUser(userId);
+        ResponseEntity<ApiResponse> response = userController.updateUserLock(userId, request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("User locked successfully", response.getBody().getMessage());
@@ -121,11 +166,14 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Unlock user successfully (Admin)")
-    void unlockUser_Success() {
-        when(userService.unlockUser(userId)).thenReturn(mockUser);
+    void updateUserLock_Unlocked_Success() {
+        UpdateUserLockRequest request = new UpdateUserLockRequest();
+        request.setLocked(false);
+        mockUser.setAccountLocked(false);
+        when(userService.updateUserLock(request, userId)).thenReturn(mockUser);
         when(userService.convertUserToDto(mockUser)).thenReturn(mockUserDto);
 
-        ResponseEntity<ApiResponse> response = userController.unlockUser(userId);
+        ResponseEntity<ApiResponse> response = userController.updateUserLock(userId, request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("User unlocked successfully", response.getBody().getMessage());

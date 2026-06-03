@@ -10,6 +10,6 @@ import com.ecommerce.sshop.model.orders.OrderItem;
 public interface OrderItemMapper {
     @Mapping(target = "productId", source = "product.id")
     @Mapping(target = "productName", source = "product.name")
-    @Mapping(target = "productBrand", source = "product.brand")
+    @Mapping(target = "productBrand", source = "product.brand.name")
     OrderItemDto toDto(OrderItem orderItem);
 }

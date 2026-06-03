@@ -7,6 +7,7 @@ import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.repository.category.ICategoryRepository;
+import com.ecommerce.sshop.request.categories.UpsertCategoryRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,20 +36,23 @@ public class CategoryService implements ICategoryService {
     }
 
     @Override
-    public Category addCategory(Category category) {
-        return Optional.of(category).filter(c -> !categoryRepository.existsByName(c.getName()))
-                .map(categoryRepository::save)
-                .orElseThrow(() -> new AlreadyExistsException(category.getName() + " already exists"));
+    public Category addCategory(UpsertCategoryRequest request) {
+        String categoryName = request.getName();
+        if (categoryRepository.existsByName(categoryName)) {
+            throw new AlreadyExistsException(categoryName + " already exists");
+        }
+        return categoryRepository.save(new Category(categoryName));
     }
 
     @Override
-    public Category updateCategory(Category category, String id) {
-        if (categoryRepository.existsByName(category.getName())
-                && !getCategoryById(id).getName().equals(category.getName())) {
-            throw new AlreadyExistsException(category.getName() + " already exists");
+    public Category updateCategory(UpsertCategoryRequest request, String id) {
+        String categoryName = request.getName();
+        if (categoryRepository.existsByName(categoryName)
+                && !getCategoryById(id).getName().equals(categoryName)) {
+            throw new AlreadyExistsException(categoryName + " already exists");
         }
         return Optional.ofNullable(getCategoryById(id)).map(oldCategory -> {
-            oldCategory.setName(category.getName());
+            oldCategory.setName(categoryName);
             return categoryRepository.save(oldCategory);
         }).orElseThrow(() -> new CategoryNotFoundException("Category not found!!"));
     }

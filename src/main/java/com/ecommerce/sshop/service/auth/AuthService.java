@@ -1,5 +1,8 @@
 package com.ecommerce.sshop.service.auth;
 
+import com.ecommerce.sshop.exception.auth.InvalidCredentialsException;
+import com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException;
+import com.ecommerce.sshop.exception.auth.UserLockedAuthException;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.model.auth.RefreshToken;
 import com.ecommerce.sshop.request.auth.LoginRequest;
@@ -18,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,14 +33,21 @@ public class AuthService implements IAuthService {
 
     @Override
     public AuthResponse authenticate(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+        } catch (LockedException exception) {
+            throw new UserLockedAuthException("User is locked");
+        } catch (AuthenticationException exception) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateTokenForUser(authentication);
         ShopUserDetails userDetails = (ShopUserDetails) authentication.getPrincipal();
         User latestUser = userService.updateLastLogin(userDetails.getId());
         if (Boolean.TRUE.equals(latestUser.getAccountLocked())) {
-            throw new LockedException("User is locked.");
+            throw new UserLockedAuthException("User is locked");
         }
         RefreshToken refreshToken = refreshTokenService.create(latestUser);
         return new AuthResponse(userDetails.getId(), jwt, refreshToken.getToken());
@@ -45,12 +56,17 @@ public class AuthService implements IAuthService {
     @Override
     public AuthResponse refreshAccessToken(String oldRefreshToken) {
         if (oldRefreshToken == null || oldRefreshToken.isBlank()) {
-            throw new BadCredentialsException("Refresh token not found");
+            throw new InvalidRefreshTokenException("Refresh token not found");
         }
 
-        User user = refreshTokenService.verify(oldRefreshToken);
+        User user;
+        try {
+            user = refreshTokenService.verify(oldRefreshToken);
+        } catch (LockedException exception) {
+            throw new UserLockedAuthException("User is locked");
+        }
         if (user == null) {
-            throw new BadCredentialsException("Invalid or expired refresh token");
+            throw new InvalidRefreshTokenException("Invalid or expired refresh token");
         }
 
         refreshTokenService.revoke(oldRefreshToken);

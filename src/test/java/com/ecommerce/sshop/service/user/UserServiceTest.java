@@ -5,8 +5,10 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
 
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.user.InvalidUserRequestException;
 import com.ecommerce.sshop.mapper.UserMapper;
 import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.model.user.User;
@@ -56,7 +58,7 @@ class UserServiceTest {
         sampleUser.setFirstName("Sang");
         sampleUser.setLastName("Tran");
         sampleUser.setPassword("encoded_pass");
-        sampleUser.setRoles(Set.of(userRole));
+        sampleUser.setRoles(new HashSet<>(Set.of(userRole)));
     }
 
     @Test
@@ -223,15 +225,18 @@ class UserServiceTest {
     @Test
     void roleLockAndLoginTimeFlows() {
         Role managerRole = new Role("Manager");
+        Role adminRole = new Role("Admin");
         UpdateUserRoleRequest roleRequest = new UpdateUserRoleRequest();
-        roleRequest.setRole("manager");
+        roleRequest.setRoles(Set.of("manager", "admin"));
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(sampleUser));
         when(roleRepository.findByName("Manager")).thenReturn(Optional.of(managerRole));
+        when(roleRepository.findByName("Admin")).thenReturn(Optional.of(adminRole));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         User changedRole = userService.updateUserRole(roleRequest, userId);
         assertTrue(changedRole.getRoles().stream().anyMatch(r -> r.getName().equals("Manager")));
+        assertTrue(changedRole.getRoles().stream().anyMatch(r -> r.getName().equals("Admin")));
 
         User locked = userService.lockUser(userId);
         assertTrue(locked.getAccountLocked());
@@ -241,5 +246,33 @@ class UserServiceTest {
 
         User updatedLogin = userService.updateLastLogin(userId);
         assertNotNull(updatedLogin.getLastLoginAt());
+    }
+
+    @Test
+    void updateUserRole_InvalidRole_ThrowsInvalidUserRequestException() {
+        UpdateUserRoleRequest roleRequest = new UpdateUserRoleRequest();
+        roleRequest.setRoles(Set.of("SuperAdmin"));
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(sampleUser));
+
+        InvalidUserRequestException exception = assertThrows(InvalidUserRequestException.class,
+                () -> userService.updateUserRole(roleRequest, userId));
+
+        assertEquals("roles must contain only: User, Admin, Manager", exception.getMessage());
+        verify(roleRepository, never()).findByName(anyString());
+    }
+
+    @Test
+    void updateUserRole_MissingRole_ThrowsInvalidUserRequestException() {
+        UpdateUserRoleRequest roleRequest = new UpdateUserRoleRequest();
+        roleRequest.setRoles(Set.of("  "));
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(sampleUser));
+
+        InvalidUserRequestException exception = assertThrows(InvalidUserRequestException.class,
+                () -> userService.updateUserRole(roleRequest, userId));
+
+        assertEquals("roles are required", exception.getMessage());
+        verify(roleRepository, never()).findByName(anyString());
     }
 }

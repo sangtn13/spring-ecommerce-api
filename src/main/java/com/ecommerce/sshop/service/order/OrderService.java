@@ -26,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.commons.lang3.EnumUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -108,14 +109,34 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public Order updateOrderStatus(String orderId, OrderStatus status) {
+    public Order updateOrderStatus(String orderId, String status) {
+        if (status == null || !EnumUtils.isValidEnum(OrderStatus.class, status.toUpperCase())) {
+            throw new StatusInvalidException("Invalid order status: " + status);
+        }
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
-        if (!isValidStatusTransition(order.getOrderStatus(), status)) {
+        OrderStatus newStatus = Enum.valueOf(OrderStatus.class, status.toUpperCase());
+        if (!isValidStatusTransition(order.getOrderStatus(), newStatus)) {
             throw new StatusInvalidException(
-                    String.format("Invalid status transition from %s to %s", order.getOrderStatus(), status));
+                    String.format("Invalid status transition from %s to %s", order.getOrderStatus(), newStatus));
         }
-        order.setOrderStatus(status);
+        order.setOrderStatus(newStatus);
+        return orderRepository.save(order);
+    }
+
+    @Override
+    @Transactional
+    public Order cancelUserOrder(String userId, String orderId) {
+        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
+
+        if (!isValidStatusTransition(order.getOrderStatus(), OrderStatus.CANCELED)) {
+            throw new StatusInvalidException(
+                    String.format("Invalid status transition from %s to %s", order.getOrderStatus(), OrderStatus.CANCELED));
+        }
+
+        order.setOrderStatus(OrderStatus.CANCELED);
         return orderRepository.save(order);
     }
 

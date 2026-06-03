@@ -2,13 +2,17 @@ package com.ecommerce.sshop.service.user;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.time.LocalDateTime;
 
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.user.InvalidUserRequestException;
 import com.ecommerce.sshop.exception.user.UserNotFoundException;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.request.users.CreateUserRequest;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserLockRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
 import com.ecommerce.sshop.repository.user.IUserRepository;
@@ -16,9 +20,12 @@ import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.repository.role.IRoleRepository;
 import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.mapper.UserMapper;
+import com.ecommerce.sshop.util.RoleNameUtil;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,7 +59,7 @@ public class UserService implements IUserService {
                     // Set default role as "User"
                     Role userRole = roleRepository.findByName("User")
                             .orElseThrow(() -> new RuntimeException("Role 'User' not found"));
-                    newUser.setRoles(Set.of(userRole));
+                    newUser.setRoles(new HashSet<>(Set.of(userRole)));
 
                     return userRepository.save(newUser);
                 })
@@ -73,11 +80,11 @@ public class UserService implements IUserService {
 
                     // Set role based on request, default to "User" if not specified
                     String requestedRole = (req.getRole() != null && !req.getRole().isEmpty()) ? req.getRole() : "User";
-                    final String roleName = normalizeAllowedRole(requestedRole);
+                    final String roleName = RoleNameUtil.normalizeAllowedRole(requestedRole);
 
                     Role role = roleRepository.findByName(roleName)
                             .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found"));
-                    newUser.setRoles(Set.of(role));
+                    newUser.setRoles(new HashSet<>(Set.of(role)));
 
                     return userRepository.save(newUser);
                 })
@@ -86,11 +93,16 @@ public class UserService implements IUserService {
 
     @Override
     public User updateUserRole(UpdateUserRoleRequest request, String userId) {
+        if (request == null) {
+            throw new InvalidUserRequestException("roles request body is required");
+        }
         User user = getUserById(userId);
-        String roleName = normalizeAllowedRole(request.getRole());
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found"));
-        user.setRoles(Set.of(role));
+        Set<String> roleNames = RoleNameUtil.normalizeRequiredRoles(request.getRoles());
+        Set<Role> roles = roleNames.stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found")))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        user.setRoles(new HashSet<>(roles));
         return userRepository.save(user);
     }
 
@@ -156,13 +168,19 @@ public class UserService implements IUserService {
         return userRepository.save(user);
     }
 
-    private String normalizeAllowedRole(String rawRole) {
-        String normalizedRole = (rawRole == null || rawRole.trim().isEmpty()) ? "User" : rawRole.trim();
-        return (normalizedRole.equalsIgnoreCase("User")
-                || normalizedRole.equalsIgnoreCase("Admin")
-                || normalizedRole.equalsIgnoreCase("Manager"))
-                        ? Character.toUpperCase(normalizedRole.charAt(0))
-                                + normalizedRole.substring(1).toLowerCase()
-                        : "User";
+    @Override
+    public Page<UserDto> getAllUsersWithPaging(Pageable pageable) {
+        return userRepository.findAll(pageable).map(userMapper::toDto);
     }
+
+    @Override
+    public User updateUserLock(UpdateUserLockRequest request, String userId) {
+        if (request == null || request.getLocked() == null) {
+            throw new InvalidUserRequestException("locked is required");
+        }
+        User user = getUserById(userId);
+        user.setAccountLocked(request.getLocked());
+        return userRepository.save(user);
+    }
+
 }

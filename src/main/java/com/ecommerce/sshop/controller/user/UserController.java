@@ -3,13 +3,18 @@ package com.ecommerce.sshop.controller.user;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserLockRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
 import com.ecommerce.sshop.response.ApiResponse;
+import com.ecommerce.sshop.response.PagedResponse;
 import com.ecommerce.sshop.service.user.IUserService;
+import com.ecommerce.sshop.util.PageUtil;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 
@@ -27,7 +34,7 @@ import org.springframework.http.ResponseEntity;
 public class UserController {
     private final IUserService userService;
 
-    @GetMapping("/my-profile")
+    @GetMapping("/me")
     public ResponseEntity<ApiResponse> getCurrentUserProfile() {
         User user = userService.getCurrentUser();
         UserDto userDto = userService.convertUserToDto(user);
@@ -35,15 +42,23 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('Admin')")
+    @GetMapping()
+    public ResponseEntity<ApiResponse> getUsers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+        Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
+        Page<UserDto> userPage = userService.getAllUsersWithPaging(pageable);
+        return ResponseEntity.ok(new ApiResponse("Users retrieved successfully", PagedResponse.of(userPage)));
+    }
+
+    @PreAuthorize("hasAuthority('Admin')")
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable String userId) {
         User user = userService.getUserById(userId);
         UserDto userDto = userService.convertUserToDto(user);
-        if (user != null) {
-            return ResponseEntity.ok(new ApiResponse("User retrieved successfully", userDto));
-        } else {
-            return ResponseEntity.status(404).body(new ApiResponse("User not found", null));
-        }
+        return ResponseEntity.ok(new ApiResponse("User retrieved successfully", userDto));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
@@ -58,20 +73,16 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<ApiResponse> updateUser(@PathVariable String userId, @RequestBody UpdateUserRequest user) {
         User updatedUser = userService.updateUser(user, userId);
-        if (updatedUser != null) {
-            UserDto userDto = userService.convertUserToDto(updatedUser);
-            return ResponseEntity.ok(new ApiResponse("User updated successfully", userDto));
-        } else {
-            return ResponseEntity.status(404).body(new ApiResponse("User not found", null));
-        }
+        UserDto userDto = userService.convertUserToDto(updatedUser);
+        return ResponseEntity.ok(new ApiResponse("User updated successfully", userDto));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
-    @PutMapping("/{userId}/role")
+    @PatchMapping("/{userId}/roles")
     public ResponseEntity<ApiResponse> updateUserRole(@PathVariable String userId, @RequestBody UpdateUserRoleRequest request) {
         User updatedUser = userService.updateUserRole(request, userId);
         UserDto userDto = userService.convertUserToDto(updatedUser);
-        return ResponseEntity.ok(new ApiResponse("User role updated successfully", userDto));
+        return ResponseEntity.ok(new ApiResponse("User roles updated successfully", userDto));
     }
 
     @PreAuthorize("hasAuthority('Admin')")
@@ -82,18 +93,14 @@ public class UserController {
     }
 
     @PreAuthorize("hasAuthority('Admin')")
-    @PutMapping("/{userId}/lock")
-    public ResponseEntity<ApiResponse> lockUser(@PathVariable String userId) {
-        User user = userService.lockUser(userId);
+    @PatchMapping("/{userId}/account-lock")
+    public ResponseEntity<ApiResponse> updateUserLock(@PathVariable String userId,
+            @RequestBody UpdateUserLockRequest request) {
+        User user = userService.updateUserLock(request, userId);
         UserDto userDto = userService.convertUserToDto(user);
-        return ResponseEntity.ok(new ApiResponse("User locked successfully", userDto));
-    }
-
-    @PreAuthorize("hasAuthority('Admin')")
-    @PutMapping("/{userId}/unlock")
-    public ResponseEntity<ApiResponse> unlockUser(@PathVariable String userId) {
-        User user = userService.unlockUser(userId);
-        UserDto userDto = userService.convertUserToDto(user);
-        return ResponseEntity.ok(new ApiResponse("User unlocked successfully", userDto));
+        String message = Boolean.TRUE.equals(user.getAccountLocked())
+                ? "User locked successfully"
+                : "User unlocked successfully";
+        return ResponseEntity.ok(new ApiResponse(message, userDto));
     }
 }

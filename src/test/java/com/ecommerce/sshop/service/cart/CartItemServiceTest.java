@@ -43,6 +43,7 @@ class CartItemServiceTest {
     private CartItem sampleCartItem;
     private final String cartId = "cart-123";
     private final String productId = "prod-123";
+    private final String itemId = "item-123";
 
     @BeforeEach
     void setUp() {
@@ -55,7 +56,7 @@ class CartItemServiceTest {
         sampleProduct.setPrice(new BigDecimal("200.00"));
 
         sampleCartItem = new CartItem();
-        sampleCartItem.setId("item-123");
+        sampleCartItem.setId(itemId);
         sampleCartItem.setProduct(sampleProduct);
         sampleCartItem.setQuantity(1);
         sampleCartItem.setUnitPrice(sampleProduct.getPrice());
@@ -90,7 +91,7 @@ class CartItemServiceTest {
         when(cartService.getCart(cartId)).thenReturn(sampleCart);
         when(cartRepository.save(any(Cart.class))).thenReturn(sampleCart);
 
-        cartItemService.removeItemFromCart(cartId, productId);
+        cartItemService.removeItemFromCart(cartId, itemId);
 
         assertTrue(sampleCart.getItems().isEmpty());
         verify(cartRepository).save(sampleCart);
@@ -101,7 +102,7 @@ class CartItemServiceTest {
     void getCartItem_NotFound_ThrowsException() {
         when(cartService.getCart(cartId)).thenReturn(sampleCart);
 
-        assertThrows(CartItemNotFoundException.class, () -> cartItemService.getCartItem(cartId, productId));
+        assertThrows(CartItemNotFoundException.class, () -> cartItemService.getCartItem(cartId, itemId));
     }
 
     @Test
@@ -121,10 +122,20 @@ class CartItemServiceTest {
         sampleCart.addItem(sampleCartItem);
         when(cartService.getCart(cartId)).thenReturn(sampleCart);
 
-        cartItemService.updateItemQuantity(cartId, productId, 4);
+        cartItemService.updateItemQuantity(cartId, itemId, 4);
 
         assertEquals(4, sampleCartItem.getQuantity());
         assertEquals(new BigDecimal("800.00"), sampleCartItem.getTotalPrice());
         verify(cartRepository).save(sampleCart);
+    }
+
+    @Test
+    @DisplayName("Update item quantity failed - Item id not found in cart")
+    void updateItemQuantity_ItemNotFound_ThrowsException() {
+        sampleCart.addItem(sampleCartItem);
+        when(cartService.getCart(cartId)).thenReturn(sampleCart);
+
+        assertThrows(CartItemNotFoundException.class, () -> cartItemService.updateItemQuantity(cartId, productId, 4));
+        verify(cartRepository, never()).save(any(Cart.class));
     }
 }
