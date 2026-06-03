@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.3.1...v1.3.2) (2026-06-03)
+
+
+### Bug Fixes
+
+* fix sonar scan ([938b468](https://github.com/SangTran13/spring-ecommerce-api/commit/938b468fa57db7a11bada87be5fb78fafc3b792a))
+
 ## [1.3.1](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.3.0...v1.3.1) (2026-06-03)
 
 # [1.3.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.2.2...v1.3.0) (2026-06-01)
