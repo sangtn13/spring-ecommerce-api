@@ -1,3 +1,16 @@
+# [1.4.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.3.2...v1.4.0) (2026-06-03)
+
+
+### Bug Fixes
+
+* fix build scan ([dd1ba6e](https://github.com/SangTran13/spring-ecommerce-api/commit/dd1ba6e1c5949df8e534a036febca0ee1cd6d144))
+* fix build test ([f3b2318](https://github.com/SangTran13/spring-ecommerce-api/commit/f3b2318eaab0464adbf247697b9ec5e2e740749b))
+
+
+### Features
+
+* implement redis and email for auth service ([9b3a898](https://github.com/SangTran13/spring-ecommerce-api/commit/9b3a89814a7d9452c7cfb23bcf152a026fbca26d))
+
 ## [1.3.2](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.3.1...v1.3.2) (2026-06-03)
 
 
