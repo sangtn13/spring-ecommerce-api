@@ -62,6 +62,17 @@ public class RefreshTokenService implements IRefreshTokenService {
         });
     }
 
+    @Override
+    @Transactional
+    public void revokeByUserId(String userId) {
+        refreshTokenRepository.findByUserId(userId).ifPresent(refreshToken -> {
+            if (refreshToken.getRevokedAt() == null) {
+                refreshToken.setRevokedAt(LocalDateTime.now());
+                refreshTokenRepository.save(refreshToken);
+            }
+        });
+    }
+
     private String generateToken() {
         return UUID.randomUUID() + "." + UUID.randomUUID();
     }

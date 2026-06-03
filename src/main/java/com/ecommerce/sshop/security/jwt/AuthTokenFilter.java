@@ -2,6 +2,7 @@ package com.ecommerce.sshop.security.jwt;
 
 import java.io.IOException;
 
+import com.ecommerce.sshop.service.auth.RedisTokenService;
 import com.ecommerce.sshop.security.user.ShopUserDetailsService;
 
 import io.jsonwebtoken.JwtException;
@@ -11,7 +12,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,11 +19,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
-    @Autowired
-    private JwtUtils jwtUtils;
-    @Autowired
-    private ShopUserDetailsService userDetailsService;
+    private final JwtUtils jwtUtils;
+    private final ShopUserDetailsService userDetailsService;
+    private final RedisTokenService redisTokenService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -32,6 +34,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
             if (StringUtils.hasText(jwt) && jwtUtils.validateJwtToken(jwt)) {
+                if (redisTokenService.isAccessTokenBlacklisted(jwt)) {
+                    throw new JwtException("Token has been invalidated");
+                }
+
+                String userId = jwtUtils.getUserIdFromJwtToken(jwt);
+                if (redisTokenService.wasIssuedBeforeUserInvalidation(
+                        userId,
+                        jwtUtils.getIssuedAtFromJwtToken(jwt).toInstant())) {
+                    throw new JwtException("Token has been invalidated");
+                }
+
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

@@ -3,8 +3,10 @@ package com.ecommerce.sshop.security.config;
 import java.util.List;
 
 
+import com.ecommerce.sshop.service.auth.RedisTokenService;
 import com.ecommerce.sshop.security.jwt.AuthTokenFilter;
 import com.ecommerce.sshop.security.jwt.JwtAuthEntryPoint;
+import com.ecommerce.sshop.security.jwt.JwtUtils;
 import com.ecommerce.sshop.security.user.ShopUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,15 +27,36 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @RequiredArgsConstructor
 @EnableWebSecurity
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableMethodSecurity(prePostEnabled = true)
 public class ShopConfig {
     private final ShopUserDetailsService userDetailsService;
     private final JwtAuthEntryPoint unauthorizedHandler;
-    private static final List<String> SECURED_URLS = List.of("/api/v1/users/**", "/api/v1/orders/**",
-            "/api/v1/cart", "/api/v1/cart/**", "/api/v1/images/**", "/api/v1/payments/orders/**");
-    private static final List<String> UNSECURED_URLS = List.of("/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html",
-            "/api-docs/**", "/v3/api-docs/**", "/api/v1/products/**", "/api/v1/categories/**", "/api/v1/brands/**", "/api/v1/payments/payos-webhook");
+    private final JwtUtils jwtUtils;
+    private final RedisTokenService redisTokenService;
+    private static final List<String> SECURED_URLS = List.of(
+            "/api/v1/auth/logout",
+            "/api/v1/auth/change-password",
+            "/api/v1/users/**",
+            "/api/v1/orders/**",
+            "/api/v1/cart",
+            "/api/v1/cart/**",
+            "/api/v1/images/**",
+            "/api/v1/payments/orders/**");
+    private static final List<String> UNSECURED_URLS = List.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/api-docs/**",
+            "/v3/api-docs/**",
+            "/api/v1/products/**",
+            "/api/v1/categories/**",
+            "/api/v1/brands/**",
+            "/api/v1/payments/payos-webhook");
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,7 +65,7 @@ public class ShopConfig {
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
+        return new AuthTokenFilter(jwtUtils, userDetailsService, redisTokenService);
     }
 
     @Bean
@@ -51,7 +74,7 @@ public class ShopConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthTokenFilter authTokenFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,7 +83,7 @@ public class ShopConfig {
                         .requestMatchers(SECURED_URLS.toArray(String[]::new)).authenticated()
                         .anyRequest().permitAll())
                 .userDetailsService(userDetailsService)
-                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

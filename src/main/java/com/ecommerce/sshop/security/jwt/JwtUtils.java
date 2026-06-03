@@ -8,6 +8,7 @@ import java.util.Collection;
 import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.security.user.ShopUserDetails;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -62,16 +63,32 @@ public class JwtUtils {
     }
 
     public String getUserNameFromJwtToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key()).build()
-                .parseClaimsJws(token).getBody().getSubject();
+        return parseClaims(token).getSubject();
+    }
+
+    public String getUserIdFromJwtToken(String token) {
+        return parseClaims(token).get("id", String.class);
+    }
+
+    public Date getIssuedAtFromJwtToken(String token) {
+        return parseClaims(token).getIssuedAt();
+    }
+
+    public Date getExpirationFromJwtToken(String token) {
+        return parseClaims(token).getExpiration();
     }
 
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
+            parseClaims(authToken);
             return true;
         } catch (Exception e) {
             throw new JwtException("Invalid JWT token: " + e.getMessage());
         }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(key()).build()
+                .parseClaimsJws(token).getBody();
     }
 }

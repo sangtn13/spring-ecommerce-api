@@ -1,6 +1,7 @@
 package com.ecommerce.sshop.exception.common;
 
 import com.ecommerce.sshop.exception.auth.InvalidCredentialsException;
+import com.ecommerce.sshop.exception.auth.InvalidPasswordResetTokenException;
 import com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException;
 import com.ecommerce.sshop.exception.auth.UserLockedAuthException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
@@ -61,7 +62,8 @@ public class GlobalExceptionHandler {
             OrderNotPendingException.class,
             OrderHasBeenPaidException.class,
             InvalidUserRequestException.class,
-            InvalidProductRequestException.class
+            InvalidProductRequestException.class,
+            InvalidPasswordResetTokenException.class
     })
     public ResponseEntity<ApiResponse> handleBadRequestException(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -102,8 +102,8 @@ The following endpoints use the authenticated user from the access token and do 
 
 | Scope | Rules |
 | --- | --- |
-| Public | `/auth/**`, `/products/**`, `/categories/**`, `/brands/**`, `POST /payments/payos-webhook` |
-| Authenticated | `/users/**`, `/orders/**`, `/cart`, `/cart/**`, `/images/**`, `/payments/orders/**` |
+| Public | `/auth/login`, `/auth/register`, `/auth/refresh`, `/auth/forgot-password`, `/auth/reset-password`, `/products/**`, `/categories/**`, `/brands/**`, `POST /payments/payos-webhook` |
+| Authenticated | `/auth/logout`, `/auth/change-password`, `/users/**`, `/orders/**`, `/cart`, `/cart/**`, `/images/**`, `/payments/orders/**` |
 | Admin only | user management endpoints |
 | Admin or Manager | product write endpoints, category write endpoints, all image endpoints, `GET /orders/{orderId}`, `PATCH /orders/{orderId}` |
 
@@ -208,6 +208,10 @@ The following endpoints use the authenticated user from the access token and do 
 | `POST` | `/auth/login` | Public | JSON body | `AuthResponse` |
 | `POST` | `/auth/refresh` | Public | `X-Refresh-Token` header | `AuthResponse` |
 | `POST` | `/auth/register` | Public | JSON body | `userId` |
+| `POST` | `/auth/logout` | Authenticated | `Authorization` header | Empty data |
+| `POST` | `/auth/change-password` | Authenticated | JSON body + `Authorization` header | Empty data |
+| `POST` | `/auth/forgot-password` | Public | JSON body | Empty data |
+| `POST` | `/auth/reset-password` | Public | JSON body | Empty data |
 
 ### Users
 
@@ -321,6 +325,34 @@ The following endpoints use the authenticated user from the access token and do 
   "lastName": "B",
   "email": "newuser@gmail.com",
   "password": "123456"
+}
+```
+
+### `POST /auth/change-password`
+
+```json
+{
+  "currentPassword": "123456",
+  "newPassword": "new-secure-password"
+}
+```
+
+### `POST /auth/forgot-password`
+
+```json
+{
+  "email": "user@gmail.com"
+}
+```
+
+Note: this endpoint now sends a branded HTML email through SMTP. Configure the mail placeholders in `src/main/resources/application.properties` before using it, especially `MAIL_USERNAME`, `MAIL_PASSWORD`, and `RESET_PASSWORD_BASE_URL`.
+
+### `POST /auth/reset-password`
+
+```json
+{
+  "token": "reset-token",
+  "newPassword": "new-secure-password"
 }
 ```
 
