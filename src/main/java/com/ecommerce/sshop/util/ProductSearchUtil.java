@@ -45,7 +45,7 @@ public final class ProductSearchUtil {
 
     public static List<String> tokenize(String value) {
         String normalized = normalizePhrase(value);
-        if (StringUtil.trimToNull(normalized) == null) {
+        if (normalized == null || normalized.isBlank()) {
             return List.of();
         }
         return new ArrayList<>(Arrays.asList(normalized.split(" ")));

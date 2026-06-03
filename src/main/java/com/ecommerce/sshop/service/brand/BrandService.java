@@ -18,17 +18,19 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class BrandService implements IBrandService {
+    private static final String BRAND_NOT_FOUND_MESSAGE = "Brand not found!!";
+
     private final IBrandRepository brandRepository;
 
     @Override
     public Brand getBrandById(String id) {
-        return brandRepository.findById(id).orElseThrow(() -> new BrandNotFoundException("Brand not found!!"));
+        return brandRepository.findById(id).orElseThrow(() -> new BrandNotFoundException(BRAND_NOT_FOUND_MESSAGE));
     }
 
     @Override
     public Brand getBrandByName(String name) {
         return Optional.ofNullable(brandRepository.findByName(name))
-                .orElseThrow(() -> new BrandNotFoundException("Brand not found!!"));
+                .orElseThrow(() -> new BrandNotFoundException(BRAND_NOT_FOUND_MESSAGE));
     }
 
     @Override
@@ -56,13 +58,13 @@ public class BrandService implements IBrandService {
         return Optional.ofNullable(getBrandById(id)).map(oldBrand -> {
             oldBrand.setName(brandName);
             return brandRepository.save(oldBrand);
-        }).orElseThrow(() -> new BrandNotFoundException("Brand not found!!"));
+        }).orElseThrow(() -> new BrandNotFoundException(BRAND_NOT_FOUND_MESSAGE));
     }
 
     @Override
     public void deleteBrandById(String id) {
         brandRepository.findById(id).ifPresentOrElse(brandRepository::delete, () -> {
-            throw new BrandNotFoundException("Brand not found!!");
+            throw new BrandNotFoundException(BRAND_NOT_FOUND_MESSAGE);
         });
     }
 
