@@ -1,9 +1,8 @@
 package com.ecommerce.sshop.controller.order;
 
-import com.ecommerce.sshop.enums.OrderStatus;
-import com.ecommerce.sshop.exception.order.StatusInvalidException;
 import com.ecommerce.sshop.dto.orders.OrderDto;
 import com.ecommerce.sshop.model.orders.Order;
+import com.ecommerce.sshop.request.orders.UpdateOrderStatusRequest;
 import com.ecommerce.sshop.response.PagedResponse;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.order.IOrderService;
@@ -20,9 +19,8 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.apache.commons.lang3.EnumUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -45,15 +43,10 @@ public class OrderController {
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse> getOrderById(@PathVariable String orderId) {
         OrderDto order = orderService.getOrderById(orderId);
-        if (order != null) {
-            return ResponseEntity.ok(new ApiResponse("Order retrieved successfully", order));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Order not found", null));
-        }
+        return ResponseEntity.ok(new ApiResponse("Order retrieved successfully", order));
     }
 
-    @GetMapping("my-orders")
+    @GetMapping()
     public ResponseEntity<ApiResponse> getUserOrders(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -67,14 +60,19 @@ public class OrderController {
     }
 
     @PreAuthorize("hasAnyAuthority('Admin','Manager')")
-    @PatchMapping("/{orderId}/status/{status}")
-    public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable String orderId, @PathVariable String status) {
-        if (!EnumUtils.isValidEnum(OrderStatus.class, status.toUpperCase())) {
-            throw new StatusInvalidException("Invalid order status: " + status);
-        }
-        Order order = orderService.updateOrderStatus(orderId,
-                Enum.valueOf(OrderStatus.class, status.toUpperCase()));
+    @PatchMapping("/{orderId}")
+    public ResponseEntity<ApiResponse> updateOrderStatus(@PathVariable String orderId,
+            @RequestBody UpdateOrderStatusRequest request) {
+        Order order = orderService.updateOrderStatus(orderId, request == null ? null : request.getStatus());
         OrderDto orderDto = orderService.convertToDto(order);
         return ResponseEntity.ok(new ApiResponse("Order status updated successfully", orderDto));
+    }
+
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<ApiResponse> cancelUserOrder(@PathVariable String orderId) {
+        String userId = userService.getCurrentUser().getId();
+        Order order = orderService.cancelUserOrder(userId, orderId);
+        OrderDto orderDto = orderService.convertToDto(order);
+        return ResponseEntity.ok(new ApiResponse("Order canceled successfully", orderDto));
     }
 }

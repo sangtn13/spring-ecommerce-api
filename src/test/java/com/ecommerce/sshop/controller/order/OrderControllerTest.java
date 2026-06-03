@@ -6,10 +6,11 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 
 import com.ecommerce.sshop.dto.orders.OrderDto;
-import com.ecommerce.sshop.enums.OrderStatus;
+import com.ecommerce.sshop.exception.order.OrderNotFoundException;
 import com.ecommerce.sshop.exception.order.StatusInvalidException;
 import com.ecommerce.sshop.model.orders.Order;
 import com.ecommerce.sshop.model.user.User;
+import com.ecommerce.sshop.request.orders.UpdateOrderStatusRequest;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.order.IOrderService;
 import com.ecommerce.sshop.service.user.IUserService;
@@ -79,11 +80,8 @@ class OrderControllerTest {
     @Test
     @DisplayName("Get order by ID fails when order is not found - Throws OrderNotFoundException")
     void getOrderById_NotFound() {
-        when(orderService.getOrderById(orderId)).thenReturn(null);
-
-        ResponseEntity<ApiResponse> response = orderController.getOrderById(orderId);
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        when(orderService.getOrderById(orderId)).thenThrow(new OrderNotFoundException("Order not found with id: " + orderId));
+        assertThrows(OrderNotFoundException.class, () -> orderController.getOrderById(orderId));
     }
 
     @Test
@@ -102,10 +100,12 @@ class OrderControllerTest {
     @Test
     @DisplayName("Update order status successfully (Admin)")
     void updateOrderStatus_Success() {
-        when(orderService.updateOrderStatus(orderId, OrderStatus.SHIPPED)).thenReturn(mockOrder);
+        when(orderService.updateOrderStatus(orderId, "SHIPPED")).thenReturn(mockOrder);
         when(orderService.convertToDto(mockOrder)).thenReturn(mockOrderDto);
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
+        request.setStatus("SHIPPED");
 
-        ResponseEntity<ApiResponse> response = orderController.updateOrderStatus(orderId, "SHIPPED");
+        ResponseEntity<ApiResponse> response = orderController.updateOrderStatus(orderId, request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Order status updated successfully", response.getBody().getMessage());
@@ -114,9 +114,27 @@ class OrderControllerTest {
     @Test
     @DisplayName("Update order status fails when status is invalid")
     void updateOrderStatus_InvalidStatus_ThrowsException() {
-        assertThrows(StatusInvalidException.class, () -> {
-            orderController.updateOrderStatus(orderId, "INVALID_STATUS_STRING");
-        });
-        verify(orderService, never()).updateOrderStatus(anyString(), any());
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
+        request.setStatus("INVALID_STATUS_STRING");
+
+        when(orderService.updateOrderStatus(orderId, "INVALID_STATUS_STRING"))
+                .thenThrow(new StatusInvalidException("Invalid order status: INVALID_STATUS_STRING"));
+
+        assertThrows(StatusInvalidException.class, () -> orderController.updateOrderStatus(orderId, request));
+        verify(orderService).updateOrderStatus(orderId, "INVALID_STATUS_STRING");
+    }
+
+    @Test
+    @DisplayName("Cancel user order successfully")
+    void cancelUserOrder_Success() {
+        when(userService.getCurrentUser()).thenReturn(mockUser);
+        when(orderService.cancelUserOrder(userId, orderId)).thenReturn(mockOrder);
+        when(orderService.convertToDto(mockOrder)).thenReturn(mockOrderDto);
+
+        ResponseEntity<ApiResponse> response = orderController.cancelUserOrder(orderId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Order canceled successfully", response.getBody().getMessage());
+        assertEquals(mockOrderDto, response.getBody().getData());
     }
 }

@@ -1,6 +1,7 @@
 package com.ecommerce.sshop.service.category;
 
 import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.request.categories.UpsertCategoryRequest;
 
 import java.util.List;
 
@@ -14,9 +15,9 @@ public interface ICategoryService {
 
     List<Category> getAllCategories();
 
-    Category addCategory(Category category);
+    Category addCategory(UpsertCategoryRequest request);
 
-    Category updateCategory(Category category, String id);
+    Category updateCategory(UpsertCategoryRequest request, String id);
 
     void deleteCategoryById(String id);
 

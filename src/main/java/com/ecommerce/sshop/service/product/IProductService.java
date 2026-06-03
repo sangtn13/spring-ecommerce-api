@@ -1,5 +1,6 @@
 package com.ecommerce.sshop.service.product;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.ecommerce.sshop.dto.product.ProductDto;
@@ -11,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface IProductService {
-
     Product addProduct(AddProductRequest request);
 
     Product getProductById(String id);
@@ -32,18 +32,16 @@ public interface IProductService {
 
     List<Product> getProductsByBrandAndName(String brand, String name);
 
-    Long countProductsByBrandAndName(String brand, String name);
-
     List<ProductDto> getConvertedProducts(List<Product> products);
 
     ProductDto convertToDto(Product product);
 
-    // Paging methods
     Page<ProductDto> getAllProductsWithPaging(Pageable pageable);
-    
+
     Page<ProductDto> getProductsByCategoryWithPaging(String category, Pageable pageable);
-    
+
     Page<ProductDto> getProductsByBrandWithPaging(String brand, Pageable pageable);
-    
-    Page<ProductDto> searchProductsWithPaging(String keyword, Pageable pageable);
+
+    Page<ProductDto> searchProductsWithPaging(String brandId, String categoryId,
+            String name, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 }

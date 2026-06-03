@@ -83,7 +83,7 @@ class ImageServiceTest {
         Image mockImage = new Image();
         mockImage.setId(imageId);
         mockImage.setFileName("old.png");
-        mockImage.setDownloadUrl("/api/v1/images/image/download/" + imageId);
+        mockImage.setDownloadUrl("/api/v1/images/" + imageId);
 
         MockMultipartFile file = new MockMultipartFile("file", "new.png", "image/png", "new-bytes".getBytes());
 
@@ -110,7 +110,7 @@ class ImageServiceTest {
         verify(imageRepository).delete(image);
 
         when(imageRepository.findById("missing")).thenReturn(Optional.empty());
-        assertDoesNotThrow(() -> imageService.deleteImageById("missing"));
+        assertThrows(ImageNotFoundException.class, () -> imageService.deleteImageById("missing"));
     }
 
     @Test

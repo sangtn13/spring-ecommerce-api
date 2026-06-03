@@ -5,7 +5,10 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 
+import com.ecommerce.sshop.dto.category.CategoryDto;
 import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.mapper.CategoryMapper;
+import com.ecommerce.sshop.request.categories.UpsertCategoryRequest;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.service.category.ICategoryService;
 
@@ -26,10 +29,12 @@ import org.springframework.http.ResponseEntity;
 class CategoryControllerTest {
 
     @Mock private ICategoryService categoryService;
+    @Mock private CategoryMapper categoryMapper;
 
     @InjectMocks private CategoryController categoryController;
 
     private Category sampleCategory;
+    private CategoryDto sampleCategoryDto;
     private final String categoryId = "cat-uuid-123";
     private final String categoryName = "Electronics";
 
@@ -38,6 +43,9 @@ class CategoryControllerTest {
         sampleCategory = new Category();
         sampleCategory.setId(categoryId);
         sampleCategory.setName(categoryName);
+        sampleCategoryDto = new CategoryDto();
+        sampleCategoryDto.setId(categoryId);
+        sampleCategoryDto.setName(categoryName);
     }
 
     @Test
@@ -45,8 +53,9 @@ class CategoryControllerTest {
     void getAllCategories_Success() {
         Page<Category> page = new PageImpl<>(List.of(sampleCategory));
         when(categoryService.getAllCategoriesWithPaging(any(Pageable.class))).thenReturn(page);
+        when(categoryMapper.toDto(sampleCategory)).thenReturn(sampleCategoryDto);
 
-        ResponseEntity<ApiResponse> response = categoryController.getAllCategories(1, 5, "id", "asc");
+        ResponseEntity<ApiResponse> response = categoryController.getAllCategories(null, 1, 5, "id", "asc");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -55,41 +64,59 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("Treat blank category name as absent and return category list")
+    void getAllCategories_BlankName_Success() {
+        Page<Category> page = new PageImpl<>(List.of(sampleCategory));
+        when(categoryService.getAllCategoriesWithPaging(any(Pageable.class))).thenReturn(page);
+        when(categoryMapper.toDto(sampleCategory)).thenReturn(sampleCategoryDto);
+
+        ResponseEntity<ApiResponse> response = categoryController.getAllCategories(" ", 1, 5, "id", "asc");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(categoryService, times(1)).getAllCategoriesWithPaging(any(Pageable.class));
+    }
+
+    @Test
     @DisplayName("Add new category successfully (Admin)")
     void addCategory_Success() {
-        when(categoryService.addCategory(any(Category.class))).thenReturn(sampleCategory);
+        UpsertCategoryRequest request = new UpsertCategoryRequest();
+        request.setName(categoryName);
+        when(categoryService.addCategory(request)).thenReturn(sampleCategory);
+        when(categoryMapper.toDto(sampleCategory)).thenReturn(sampleCategoryDto);
 
-        ResponseEntity<ApiResponse> response = categoryController.addCategory(sampleCategory);
+        ResponseEntity<ApiResponse> response = categoryController.addCategory(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Category added successfully", response.getBody().getMessage());
-        assertEquals(sampleCategory, response.getBody().getData());
+        assertEquals(sampleCategoryDto, response.getBody().getData());
     }
 
     @Test
     @DisplayName("Get category by ID successfully")
     void getCategoryById_Success() {
         when(categoryService.getCategoryById(categoryId)).thenReturn(sampleCategory);
+        when(categoryMapper.toDto(sampleCategory)).thenReturn(sampleCategoryDto);
 
         ResponseEntity<ApiResponse> response = categoryController.getCategoryById(categoryId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Category retrieved successfully", response.getBody().getMessage());
-        assertEquals(sampleCategory, response.getBody().getData());
+        assertEquals(sampleCategoryDto, response.getBody().getData());
     }
 
     @Test
     @DisplayName("Get category by name successfully")
     void getCategoryByName_Success() {
         when(categoryService.getCategoryByName(categoryName)).thenReturn(sampleCategory);
+        when(categoryMapper.toDto(sampleCategory)).thenReturn(sampleCategoryDto);
 
-        ResponseEntity<ApiResponse> response = categoryController.getCategoryByName(categoryName);
+        ResponseEntity<ApiResponse> response = categoryController.getAllCategories(categoryName, 1, 5, "id", "asc");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(sampleCategory, response.getBody().getData());
+        assertEquals(sampleCategoryDto, response.getBody().getData());
     }
 
     @Test
@@ -108,13 +135,15 @@ class CategoryControllerTest {
     @Test
     @DisplayName("Update category successfully (Admin)")
     void updateCategory_Success() {
-        Category updateData = new Category("New Electronics");
-        when(categoryService.updateCategory(any(Category.class), eq(categoryId))).thenReturn(sampleCategory);
+        UpsertCategoryRequest updateData = new UpsertCategoryRequest();
+        updateData.setName("New Electronics");
+        when(categoryService.updateCategory(eq(updateData), eq(categoryId))).thenReturn(sampleCategory);
+        when(categoryMapper.toDto(sampleCategory)).thenReturn(sampleCategoryDto);
 
         ResponseEntity<ApiResponse> response = categoryController.updateCategory(categoryId, updateData);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Category updated successfully", response.getBody().getMessage());
-        verify(categoryService, times(1)).updateCategory(any(Category.class), eq(categoryId));
+        verify(categoryService, times(1)).updateCategory(eq(updateData), eq(categoryId));
     }
 }

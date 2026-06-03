@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.ecommerce.sshop.model.base.BaseEntity;
+import com.ecommerce.sshop.model.brand.Brand;
 import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.model.image.Image;
 
@@ -24,8 +25,6 @@ public class Product extends BaseEntity {
     private String id;
     @Column(length = 150, nullable = false)
     private String name;
-    @Column(length = 120)
-    private String brand;
     @Column(precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
     @Column(nullable = false)
@@ -39,10 +38,14 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @ManyToOne
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
 
-    public Product(String name, String brand, BigDecimal price, int inventory, String description, Category category) {
+    public Product(String name, Brand brand, BigDecimal price, int inventory, String description, Category category) {
         this.name = name;
         this.brand = brand;
         this.price = price;

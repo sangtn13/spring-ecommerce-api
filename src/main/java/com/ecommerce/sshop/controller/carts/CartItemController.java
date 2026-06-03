@@ -20,13 +20,13 @@ import org.springframework.http.ResponseEntity;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("${api.prefix}/cart-items")
+@RequestMapping("${api.prefix}/cart/items")
 public class CartItemController {
     private final ICartItemService cartItemService;
     private final ICartService cartService;
     private final IUserService userService;
 
-    @PostMapping("/add")
+    @PostMapping()
     public ResponseEntity<ApiResponse> addItemToCart(@RequestParam String productId,
             @RequestParam Integer quantity) {
         User user = userService.getCurrentUser();
@@ -35,7 +35,7 @@ public class CartItemController {
         return ResponseEntity.ok(new ApiResponse("Item added to cart successfully", null));
     }
 
-    @DeleteMapping("/remove/{itemId}")
+    @DeleteMapping("/{itemId}")
     public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable String itemId) {
         User user = userService.getCurrentUser();
         Cart cart = cartService.getCartByUserId(user.getId());
@@ -43,7 +43,7 @@ public class CartItemController {
         return ResponseEntity.ok(new ApiResponse("Item removed from cart successfully", null));
     }
 
-    @PutMapping("/update/{itemId}")
+    @PutMapping("/{itemId}")
     public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable String itemId,
             @RequestParam Integer quantity) {
         User user = userService.getCurrentUser();

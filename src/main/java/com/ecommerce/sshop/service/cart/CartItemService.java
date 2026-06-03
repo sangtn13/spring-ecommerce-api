@@ -46,9 +46,9 @@ public class CartItemService implements ICartItemService {
     }
 
     @Override
-    public void removeItemFromCart(String cartId, String productId) {
+    public void removeItemFromCart(String cartId, String itemId) {
         Cart cart = cartService.getCart(cartId);
-        CartItem cartItem = getCartItem(cartId, productId);
+        CartItem cartItem = getCartItem(cartId, itemId);
         if (cartItem != null) {
             cart.removeItem(cartItem);
             cartRepository.save(cart);
@@ -56,14 +56,12 @@ public class CartItemService implements ICartItemService {
     }
 
     @Override
-    public void updateItemQuantity(String cartId, String productId, int quantity) {
+    public void updateItemQuantity(String cartId, String itemId, int quantity) {
         Cart cart = cartService.getCart(cartId);
-        cart.getItems().stream().filter(item -> item.getProduct().getId().equals(productId)).findFirst()
-                .ifPresent(cartItem -> {
-                    cartItem.setQuantity(quantity);
-                    cartItem.setUnitPrice(cartItem.getProduct().getPrice());
-                    cartItem.setTotalPrice();
-                });
+        CartItem cartItem = getCartItem(cartId, itemId);
+        cartItem.setQuantity(quantity);
+        cartItem.setUnitPrice(cartItem.getProduct().getPrice());
+        cartItem.setTotalPrice();
         BigDecimal totalAmount = cart.getItems().stream().map(CartItem::getTotalPrice).reduce(BigDecimal.ZERO,
                 BigDecimal::add);
         cart.setTotalAmount(totalAmount);
@@ -71,9 +69,9 @@ public class CartItemService implements ICartItemService {
     }
 
     @Override
-    public CartItem getCartItem(String cartId, String productId) {
+    public CartItem getCartItem(String cartId, String itemId) {
         Cart cart = cartService.getCart(cartId);
-        return cart.getItems().stream().filter(item -> item.getProduct().getId().equals(productId)).findFirst()
+        return cart.getItems().stream().filter(item -> item.getId().equals(itemId)).findFirst()
                 .orElseThrow(() -> new CartItemNotFoundException("Cart item not found"));
     }
 

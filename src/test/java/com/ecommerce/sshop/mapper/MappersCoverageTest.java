@@ -12,6 +12,7 @@ import com.ecommerce.sshop.dto.carts.CartDto;
 import com.ecommerce.sshop.dto.carts.CartItemDto;
 import com.ecommerce.sshop.dto.orders.OrderDto;
 import com.ecommerce.sshop.dto.orders.OrderItemDto;
+import com.ecommerce.sshop.dto.product.ProductDto;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.enums.OrderStatus;
 import com.ecommerce.sshop.model.carts.Cart;
@@ -19,7 +20,10 @@ import com.ecommerce.sshop.model.carts.CartItem;
 import com.ecommerce.sshop.model.image.Image;
 import com.ecommerce.sshop.model.orders.Order;
 import com.ecommerce.sshop.model.orders.OrderItem;
+import com.ecommerce.sshop.model.brand.Brand;
+import com.ecommerce.sshop.model.category.Category;
 import com.ecommerce.sshop.model.product.Product;
+import com.ecommerce.sshop.model.role.Role;
 import com.ecommerce.sshop.model.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,7 +67,8 @@ class MappersCoverageTest {
         Product product = new Product();
         product.setId("prod-999");
         product.setName("Gaming Mouse");
-        product.setBrand("Logitech");
+        product.setBrand(new Brand("Logitech"));
+        product.setCategory(new Category("Accessories"));
         product.setPrice(new BigDecimal("50.00"));
 
         CartItem cartItem = new CartItem();
@@ -81,6 +86,7 @@ class MappersCoverageTest {
         user.setId("user-000");
         user.setEmail("test@gmail.com");
         user.setCart(cart);
+        user.setRoles(new HashSet<>(Set.of(new Role("User"), new Role("Manager"))));
 
         Order order = new Order();
         order.setId("order-111");
@@ -100,6 +106,7 @@ class MappersCoverageTest {
         CartDto cartDto = cartMapper.toDto(cart);
         CartItemDto cartItemDto = cartItemMapper.toDto(cartItem);
         OrderItemDto orderItemDto = orderItemMapper.toDto(orderItem);
+        ProductDto productDto = productMapper.toDto(product);
         Image image = new Image();
         image.setId("img-1");
         image.setFileName("f.png");
@@ -108,6 +115,7 @@ class MappersCoverageTest {
         // 2. Validate all fields are accurately mapped
         assertNotNull(userDto);
         assertEquals("test@gmail.com", userDto.getEmail());
+        assertEquals(Set.of("User", "Manager"), userDto.getRoles());
         assertNotNull(userDto.getCart());
         assertEquals("cart-555", userDto.getCart().getCartId());
         
@@ -119,6 +127,11 @@ class MappersCoverageTest {
         assertEquals("prod-999", orderItemDto.getProductId());
         assertEquals("Gaming Mouse", orderItemDto.getProductName());
         assertEquals("Logitech", orderItemDto.getProductBrand());
+        assertNotNull(productDto);
+        assertNotNull(productDto.getBrand());
+        assertEquals("Logitech", productDto.getBrand().getName());
+        assertNotNull(productDto.getCategory());
+        assertEquals("Accessories", productDto.getCategory().getName());
         assertNotNull(imageDto);
         assertEquals("img-1", imageDto.getId());
     }

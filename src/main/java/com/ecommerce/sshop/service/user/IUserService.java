@@ -4,8 +4,12 @@ import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.dto.user.UserDto;
 import com.ecommerce.sshop.request.users.CreateUserRequest;
 import com.ecommerce.sshop.request.users.CreateUserWithRoleRequest;
+import com.ecommerce.sshop.request.users.UpdateUserLockRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRoleRequest;
 import com.ecommerce.sshop.request.users.UpdateUserRequest;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface IUserService {
 
@@ -30,4 +34,8 @@ public interface IUserService {
     User unlockUser(String userId);
 
     User updateLastLogin(String userId);
+
+    Page<UserDto> getAllUsersWithPaging(Pageable pageable);
+
+    User updateUserLock(UpdateUserLockRequest request, String userId);
 }

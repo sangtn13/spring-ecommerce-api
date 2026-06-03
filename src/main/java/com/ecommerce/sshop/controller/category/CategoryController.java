@@ -1,10 +1,14 @@
 package com.ecommerce.sshop.controller.category;
 
+import com.ecommerce.sshop.dto.category.CategoryDto;
+import com.ecommerce.sshop.mapper.CategoryMapper;
 import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.request.categories.UpsertCategoryRequest;
 import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.response.PagedResponse;
 import com.ecommerce.sshop.service.category.ICategoryService;
 import com.ecommerce.sshop.util.PageUtil;
+import com.ecommerce.sshop.util.StringUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,36 +23,42 @@ import org.springframework.data.domain.Pageable;
 @RequestMapping("${api.prefix}/categories")
 public class CategoryController {
     private final ICategoryService categoryService;
+    private final CategoryMapper categoryMapper;
 
     @GetMapping()
     public ResponseEntity<ApiResponse> getAllCategories(
+            @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) {
+        String normalizedName = StringUtil.trimToNull(name);
+        if (normalizedName != null) {
+            return getCategoryByName(normalizedName);
+        }
+
         Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
-        Page<Category> categoryPage = categoryService.getAllCategoriesWithPaging(pageable);
-        PagedResponse<Category> pagedResponse = PagedResponse.of(categoryPage);
+        Page<CategoryDto> categoryPage = categoryService.getAllCategoriesWithPaging(pageable).map(categoryMapper::toDto);
+        PagedResponse<CategoryDto> pagedResponse = PagedResponse.of(categoryPage);
         return ResponseEntity.ok(new ApiResponse("Categories retrieved successfully", pagedResponse));
     }
 
     @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PostMapping()
-    public ResponseEntity<ApiResponse> addCategory(@RequestBody Category name) {
-        Category theCategory = categoryService.addCategory(name);
-        return ResponseEntity.ok(new ApiResponse("Category added successfully", theCategory));
+    public ResponseEntity<ApiResponse> addCategory(@RequestBody UpsertCategoryRequest request) {
+        Category theCategory = categoryService.addCategory(request);
+        return ResponseEntity.ok(new ApiResponse("Category added successfully", categoryMapper.toDto(theCategory)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getCategoryById(@PathVariable String id) {
         Category theCategory = categoryService.getCategoryById(id);
-        return ResponseEntity.ok(new ApiResponse("Category retrieved successfully", theCategory));
+        return ResponseEntity.ok(new ApiResponse("Category retrieved successfully", categoryMapper.toDto(theCategory)));
     }
 
-    @GetMapping("/name/{name}")
-    public ResponseEntity<ApiResponse> getCategoryByName(@PathVariable String name) {
+    public ResponseEntity<ApiResponse> getCategoryByName(String name) {
         Category theCategory = categoryService.getCategoryByName(name);
-        return ResponseEntity.ok(new ApiResponse("Category retrieved successfully", theCategory));
+        return ResponseEntity.ok(new ApiResponse("Category retrieved successfully", categoryMapper.toDto(theCategory)));
     }
 
     @PreAuthorize("hasAnyAuthority('Admin','Manager')")
@@ -60,8 +70,8 @@ public class CategoryController {
 
     @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateCategory(@PathVariable String id, @RequestBody Category category) {
-        Category updateCategory = categoryService.updateCategory(category, id);
-        return ResponseEntity.ok(new ApiResponse("Category updated successfully", updateCategory));
+    public ResponseEntity<ApiResponse> updateCategory(@PathVariable String id, @RequestBody UpsertCategoryRequest request) {
+        Category updateCategory = categoryService.updateCategory(request, id);
+        return ResponseEntity.ok(new ApiResponse("Category updated successfully", categoryMapper.toDto(updateCategory)));
     }
 }

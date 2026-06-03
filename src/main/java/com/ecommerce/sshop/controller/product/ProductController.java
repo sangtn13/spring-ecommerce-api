@@ -1,6 +1,6 @@
 package com.ecommerce.sshop.controller.product;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 import com.ecommerce.sshop.dto.product.ProductDto;
 import com.ecommerce.sshop.exception.product.ProductNotFoundException;
@@ -11,6 +11,7 @@ import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.response.PagedResponse;
 import com.ecommerce.sshop.service.product.IProductService;
 import com.ecommerce.sshop.util.PageUtil;
+import com.ecommerce.sshop.util.StringUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +20,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
@@ -28,14 +37,46 @@ public class ProductController {
     private final IProductService productService;
 
     @GetMapping()
-    public ResponseEntity<ApiResponse> getAllProducts(@RequestParam(defaultValue = "1") int page,
+    public ResponseEntity<ApiResponse> getProducts(
+            @RequestParam(required = false) String brandId,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDirection) throws ProductNotFoundException {
+        String normalizedBrandId = StringUtil.trimToNull(brandId);
+        String normalizedCategoryId = StringUtil.trimToNull(categoryId);
+        String normalizedName = StringUtil.trimToNull(name);
+
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse("minPrice must be less than or equal to maxPrice", null));
+        }
 
         Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
+        if (normalizedBrandId == null && normalizedCategoryId == null
+                && normalizedName == null && minPrice == null && maxPrice == null) {
+            Page<ProductDto> productPage = productService.getAllProductsWithPaging(pageable);
+            PagedResponse<ProductDto> pagedResponse = PagedResponse.of(productPage);
+            return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", pagedResponse));
+        }
 
-        Page<ProductDto> productPage = productService.getAllProductsWithPaging(pageable);
+        Page<ProductDto> productPage = productService.searchProductsWithPaging(
+                normalizedBrandId,
+                normalizedCategoryId,
+                normalizedName,
+                minPrice,
+                maxPrice,
+                pageable);
+
+        if (productPage.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse("Product not found!", HttpStatus.NOT_FOUND));
+        }
+
         PagedResponse<ProductDto> pagedResponse = PagedResponse.of(productPage);
         return ResponseEntity.ok(new ApiResponse("Products retrieved successfully", pagedResponse));
     }
@@ -50,8 +91,8 @@ public class ProductController {
     @PreAuthorize("hasAnyAuthority('Admin','Manager')")
     @PostMapping()
     public ResponseEntity<ApiResponse> addProduct(@RequestBody AddProductRequest product) {
-        Product theProduct = productService.addProduct(product);
-        ProductDto convertedProduct = productService.convertToDto(theProduct);
+        Product createdProduct = productService.addProduct(product);
+        ProductDto convertedProduct = productService.convertToDto(createdProduct);
         return ResponseEntity.ok(new ApiResponse("Product added successfully", convertedProduct));
     }
 
@@ -59,8 +100,8 @@ public class ProductController {
     @PutMapping("/{productId}")
     public ResponseEntity<ApiResponse> updateProduct(@RequestBody UpdateProductRequest request,
             @PathVariable String productId) {
-        Product theProduct = productService.updateProduct(request, productId);
-        ProductDto convertedProduct = productService.convertToDto(theProduct);
+        Product updatedProduct = productService.updateProduct(request, productId);
+        ProductDto convertedProduct = productService.convertToDto(updatedProduct);
         return ResponseEntity.ok(new ApiResponse("Product updated successfully", convertedProduct));
     }
 
@@ -69,107 +110,5 @@ public class ProductController {
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable String productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.ok(new ApiResponse("Product deleted successfully", productId));
-    }
-
-    @GetMapping("/by-brand-and-name")
-    public ResponseEntity<ApiResponse> getProductByBrandAndName(@RequestParam String brand, @RequestParam String name) {
-        List<Product> products = productService.getProductsByBrandAndName(brand, name);
-        if (products.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Product not found!", HttpStatus.NOT_FOUND));
-        }
-        List<ProductDto> convertedProducts = productService.getConvertedProducts(products);
-        return ResponseEntity.ok(new ApiResponse("Success", convertedProducts));
-    }
-
-    @GetMapping("/by-category-and-brand")
-    public ResponseEntity<ApiResponse> getProductByCategoryAndBrand(@RequestParam String category,
-            @RequestParam String brand) {
-        List<Product> products = productService.getProductsByCategoryAndBrand(category, brand);
-        if (products.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Product not found!", HttpStatus.NOT_FOUND));
-        }
-        List<ProductDto> convertedProducts = productService.getConvertedProducts(products);
-        return ResponseEntity.ok(new ApiResponse("Success", convertedProducts));
-    }
-
-    @GetMapping("/name/{name}")
-    public ResponseEntity<ApiResponse> getProductByName(@PathVariable String name) {
-        List<Product> products = productService.getProductsByName(name);
-        if (products.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Product not found!", HttpStatus.NOT_FOUND));
-        }
-        List<ProductDto> convertedProducts = productService.getConvertedProducts(products);
-        return ResponseEntity.ok(new ApiResponse("Success", convertedProducts));
-    }
-
-    @GetMapping("/by-brand")
-    public ResponseEntity<ApiResponse> findProductByBrandPaged(
-            @RequestParam String brand,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
-
-        Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
-        Page<ProductDto> productPage = productService.getProductsByBrandWithPaging(brand, pageable);
-
-        if (productPage.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Product not found!", HttpStatus.NOT_FOUND));
-        }
-
-        PagedResponse<ProductDto> pagedResponse = PagedResponse.of(productPage);
-        return ResponseEntity.ok(new ApiResponse("Products by brand retrieved successfully", pagedResponse));
-    }
-
-    @GetMapping("/by-category/{category}")
-    public ResponseEntity<ApiResponse> getProductByCategoryPaged(
-            @PathVariable String category,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
-
-        Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
-        Page<ProductDto> productPage = productService.getProductsByCategoryWithPaging(category, pageable);
-
-        if (productPage.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Product not found!", HttpStatus.NOT_FOUND));
-        }
-
-        PagedResponse<ProductDto> pagedResponse = PagedResponse.of(productPage);
-        return ResponseEntity.ok(new ApiResponse("Products by category retrieved successfully", pagedResponse));
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse> searchProductsPaged(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
-
-        Pageable pageable = PageUtil.createPageable(page, size, sortBy, sortDirection);
-        Page<ProductDto> productPage = productService.searchProductsWithPaging(keyword, pageable);
-
-        if (productPage.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("No products found matching the search criteria!", HttpStatus.NOT_FOUND));
-        }
-
-        PagedResponse<ProductDto> pagedResponse = PagedResponse.of(productPage);
-        return ResponseEntity.ok(new ApiResponse("Search results retrieved successfully", pagedResponse));
-    }
-
-    @PreAuthorize("hasAnyAuthority('Admin','Manager')")
-    @GetMapping("/count")
-    public ResponseEntity<ApiResponse> getProductCountByBrandAndName(@RequestParam String brand,
-            @RequestParam String name) {
-        long count = productService.countProductsByBrandAndName(brand, name);
-        return ResponseEntity.ok(new ApiResponse("Product count retrieved successfully", count));
     }
 }

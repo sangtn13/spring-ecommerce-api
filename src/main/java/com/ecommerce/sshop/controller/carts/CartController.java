@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("${api.prefix}/carts")
+@RequestMapping("${api.prefix}/cart")
 public class CartController {
     private final ICartService cartService;
     private final IUserService userService;
 
-    @GetMapping("/my-cart")
+    @GetMapping()
     public ResponseEntity<ApiResponse> getCart() {
         User user = userService.getCurrentUser();
         Cart cart = cartService.getCartByUserId(user.getId());
@@ -29,7 +29,7 @@ public class CartController {
         return ResponseEntity.ok(new ApiResponse("Cart retrieved successfully", cartDto));
     }
 
-    @DeleteMapping("/clear")
+    @DeleteMapping("/items")
     public ResponseEntity<ApiResponse> clearCart() {
         User user = userService.getCurrentUser();
         cartService.clearCartByUserId(user.getId());

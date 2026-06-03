@@ -10,6 +10,7 @@ import java.util.Optional;
 import com.ecommerce.sshop.exception.category.CategoryNotFoundException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 import com.ecommerce.sshop.model.category.Category;
+import com.ecommerce.sshop.request.categories.UpsertCategoryRequest;
 import com.ecommerce.sshop.repository.category.ICategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -110,24 +111,28 @@ class CategoryServiceTest {
     @Test
     @DisplayName("Add new Category successfully when name does not exist")
     void addCategory_Success() {
+        UpsertCategoryRequest request = new UpsertCategoryRequest();
+        request.setName(categoryName);
         when(categoryRepository.existsByName(categoryName)).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(sampleCategory);
 
-        Category savedCategory = categoryService.addCategory(sampleCategory);
+        Category savedCategory = categoryService.addCategory(request);
 
         assertNotNull(savedCategory);
         assertEquals(categoryName, savedCategory.getName());
         verify(categoryRepository, times(1)).existsByName(categoryName);
-        verify(categoryRepository, times(1)).save(sampleCategory);
+        verify(categoryRepository, times(1)).save(any(Category.class));
     }
 
     @Test
     @DisplayName("Add new Category failed - Name already exists, throws AlreadyExistsException")
     void addCategory_AlreadyExists() {
+        UpsertCategoryRequest request = new UpsertCategoryRequest();
+        request.setName(categoryName);
         when(categoryRepository.existsByName(categoryName)).thenReturn(true);
 
         AlreadyExistsException exception = assertThrows(AlreadyExistsException.class, () -> {
-            categoryService.addCategory(sampleCategory);
+            categoryService.addCategory(request);
         });
 
         assertEquals(categoryName + " already exists", exception.getMessage());
@@ -142,7 +147,7 @@ class CategoryServiceTest {
     @DisplayName("Update Category failed - New name is already used by another id, throws AlreadyExistsException")
     void updateCategory_NameAlreadyExistsForOtherId() {
         String newName = "Gadgets";
-        Category updateRequest = new Category();
+        UpsertCategoryRequest updateRequest = new UpsertCategoryRequest();
         updateRequest.setName(newName);
 
         // Mock: New name already exists in the DB
@@ -165,7 +170,7 @@ class CategoryServiceTest {
     @DisplayName("Update Category successfully - Keep the same name or change to a completely new name that is not used by anyone")
     void updateCategory_Success() {
         String newName = "New Electronics";
-        Category updateRequest = new Category();
+        UpsertCategoryRequest updateRequest = new UpsertCategoryRequest();
         updateRequest.setName(newName);
 
         when(categoryRepository.existsByName(newName)).thenReturn(false);

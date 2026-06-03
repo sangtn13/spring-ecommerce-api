@@ -3,8 +3,9 @@ package com.ecommerce.sshop.dto.product;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.ecommerce.sshop.dto.brand.BrandSummaryDto;
+import com.ecommerce.sshop.dto.category.CategorySummaryDto;
 import com.ecommerce.sshop.dto.image.ImageDto;
-import com.ecommerce.sshop.model.category.Category;
 
 import lombok.Data;
 
@@ -12,10 +13,10 @@ import lombok.Data;
 public class ProductDto {
     private String id;
     private String name;
-    private String brand;
+    private BrandSummaryDto brand;
     private BigDecimal price;
     private int inventory;
     private String description;
-    private Category category;
+    private CategorySummaryDto category;
     private List<ImageDto> images;
 }
