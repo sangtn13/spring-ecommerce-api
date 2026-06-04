@@ -5,6 +5,7 @@ import com.ecommerce.sshop.exception.auth.InvalidPasswordResetTokenException;
 import com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException;
 import com.ecommerce.sshop.exception.auth.UserLockedAuthException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
+import com.ecommerce.sshop.exception.common.TooManyRequestsException;
 import com.ecommerce.sshop.exception.carts.CartItemNotFoundException;
 import com.ecommerce.sshop.exception.carts.CartNotFoundException;
 import com.ecommerce.sshop.exception.carts.QuantityInvalidException;
@@ -51,6 +52,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserLockedAuthException.class)
     public ResponseEntity<ApiResponse> handleLockedException(UserLockedAuthException ex) {
         return ResponseEntity.status(HttpStatus.LOCKED)
+                .body(new ApiResponse(ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ApiResponse> handleTooManyRequestsException(TooManyRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(new ApiResponse(ex.getMessage(), null));
     }
 

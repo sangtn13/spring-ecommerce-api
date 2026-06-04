@@ -114,8 +114,8 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    public void forgotPassword(ForgotPasswordRequest request) {
-        passwordResetService.sendResetPasswordEmail(request);
+    public void forgotPassword(ForgotPasswordRequest request, String clientIp) {
+        passwordResetService.sendResetPasswordEmail(request, clientIp);
     }
 
     @Override

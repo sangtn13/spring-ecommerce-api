@@ -19,7 +19,7 @@ public interface IAuthService {
 
     void changePassword(String authorizationHeader, ChangePasswordRequest request);
 
-    void forgotPassword(ForgotPasswordRequest request);
+    void forgotPassword(ForgotPasswordRequest request, String clientIp);
 
     void resetPassword(ResetPasswordRequest request);
 }

@@ -183,9 +183,9 @@ class AuthServiceTest {
         ForgotPasswordRequest request = new ForgotPasswordRequest();
         request.setEmail("test@gmail.com");
 
-        authService.forgotPassword(request);
+        authService.forgotPassword(request, "127.0.0.1");
 
-        verify(passwordResetService).sendResetPasswordEmail(request);
+        verify(passwordResetService).sendResetPasswordEmail(request, "127.0.0.1");
     }
 
     @Test
