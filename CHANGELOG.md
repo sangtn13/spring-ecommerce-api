@@ -1,3 +1,5 @@
+## [1.4.1](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.4.0...v1.4.1) (2026-06-04)
+
 # [1.4.0](https://github.com/SangTran13/spring-ecommerce-api/compare/v1.3.2...v1.4.0) (2026-06-03)
 
 
