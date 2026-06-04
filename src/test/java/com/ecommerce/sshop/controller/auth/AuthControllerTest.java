@@ -32,11 +32,15 @@ import com.ecommerce.sshop.response.ApiResponse;
 import com.ecommerce.sshop.response.AuthResponse;
 import com.ecommerce.sshop.service.auth.IAuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
     @Mock
     private IAuthService authService;
+    @Mock
+    private HttpServletRequest httpServletRequest;
 
     @InjectMocks
     private AuthController authController;
@@ -137,12 +141,14 @@ class AuthControllerTest {
     @Test
     @DisplayName("Forgot password succeeds")
     void forgotPassword_Success() {
-        ResponseEntity<ApiResponse> response = authController.forgotPassword(forgotPasswordRequest);
+        when(httpServletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
+
+        ResponseEntity<ApiResponse> response = authController.forgotPassword(forgotPasswordRequest, httpServletRequest);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("If an account exists for that email, a password reset email has been sent.", response.getBody().getMessage());
         assertEquals(null, response.getBody().getData());
-        verify(authService).forgotPassword(forgotPasswordRequest);
+        verify(authService).forgotPassword(forgotPasswordRequest, "127.0.0.1");
     }
 
     @Test

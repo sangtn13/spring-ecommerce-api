@@ -17,17 +17,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.ecommerce.sshop.exception.auth.InvalidPasswordResetTokenException;
+import com.ecommerce.sshop.exception.auth.PasswordResetEmailCooldownException;
+import com.ecommerce.sshop.exception.auth.PasswordResetIpRateLimitException;
 import com.ecommerce.sshop.exception.user.InvalidUserRequestException;
 import com.ecommerce.sshop.model.user.User;
 import com.ecommerce.sshop.repository.user.IUserRepository;
 import com.ecommerce.sshop.request.auth.ForgotPasswordRequest;
 import com.ecommerce.sshop.request.auth.ResetPasswordRequest;
-import com.ecommerce.sshop.service.email.EmailService;
 import com.ecommerce.sshop.service.email.EmailTemplateService;
+import com.ecommerce.sshop.service.email.PasswordResetEmailRequestedEvent;
 import com.ecommerce.sshop.service.user.IUserService;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,9 +47,9 @@ class PasswordResetServiceTest {
     @Mock
     private RedisTokenService redisTokenService;
     @Mock
-    private EmailService emailService;
-    @Mock
     private EmailTemplateService emailTemplateService;
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @InjectMocks
     private PasswordResetService passwordResetService;
@@ -54,13 +57,14 @@ class PasswordResetServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(passwordResetService, "passwordResetTokenExpirationMs", 900000L);
+        ReflectionTestUtils.setField(passwordResetService, "passwordResetEmailCooldownMs", 120000L);
         ReflectionTestUtils.setField(passwordResetService, "resetPasswordBaseUrl", "http://localhost:3000/reset-password");
         ReflectionTestUtils.setField(passwordResetService, "supportEmail", "support@example.com");
     }
 
     @Test
-    @DisplayName("Forgot password sends reset email when user exists")
-    void sendResetPasswordEmail_UserExists_SendsEmail() {
+    @DisplayName("Forgot password publishes reset email event when user exists")
+    void sendResetPasswordEmail_UserExists_PublishesEvent() {
         ForgotPasswordRequest request = new ForgotPasswordRequest();
         request.setEmail("user@gmail.com");
 
@@ -69,7 +73,9 @@ class PasswordResetServiceTest {
         user.setEmail("user@gmail.com");
         user.setFirstName("Sang");
 
+        when(redisTokenService.isPasswordResetIpRateLimitExceeded("127.0.0.1")).thenReturn(false);
         when(userRepository.findByEmail("user@gmail.com")).thenReturn(user);
+        when(redisTokenService.tryAcquirePasswordResetEmailCooldown("user@gmail.com")).thenReturn(true);
         when(redisTokenService.createPasswordResetToken(user)).thenReturn("token-123");
         when(emailTemplateService.render(
                 any(),
@@ -80,9 +86,57 @@ class PasswordResetServiceTest {
                                 && placeholders.get("resetUrl").contains("token-123"))))
                 .thenReturn("<html>reset email</html>");
 
-        passwordResetService.sendResetPasswordEmail(request);
+        passwordResetService.sendResetPasswordEmail(request, "127.0.0.1");
 
-        verify(emailService).sendHtmlEmail("user@gmail.com", "Reset your SShop password", "<html>reset email</html>");
+        verify(applicationEventPublisher).publishEvent(
+                new PasswordResetEmailRequestedEvent(
+                        "user@gmail.com",
+                        "Reset your SShop password",
+                        "<html>reset email</html>"));
+    }
+
+    @Test
+    @DisplayName("Forgot password throws when IP rate limit is exceeded")
+    void sendResetPasswordEmail_IpRateLimitExceeded_ThrowsException() {
+        ForgotPasswordRequest request = new ForgotPasswordRequest();
+        request.setEmail("user@gmail.com");
+
+        when(redisTokenService.isPasswordResetIpRateLimitExceeded("127.0.0.1")).thenReturn(true);
+
+        PasswordResetIpRateLimitException exception = assertThrows(
+                PasswordResetIpRateLimitException.class,
+                () -> passwordResetService.sendResetPasswordEmail(request, "127.0.0.1"));
+
+        assertEquals("Too many password reset requests from this IP. Please try again later.", exception.getMessage());
+        verify(userRepository, never()).findByEmail(any());
+        verify(redisTokenService, never()).tryAcquirePasswordResetEmailCooldown(any());
+        verify(redisTokenService, never()).createPasswordResetToken(any());
+        verify(emailTemplateService, never()).render(any(), any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @DisplayName("Forgot password throws when cooldown is active")
+    void sendResetPasswordEmail_CooldownActive_ThrowsException() {
+        ForgotPasswordRequest request = new ForgotPasswordRequest();
+        request.setEmail("user@gmail.com");
+
+        User user = new User();
+        user.setEmail("user@gmail.com");
+
+        when(redisTokenService.isPasswordResetIpRateLimitExceeded("127.0.0.1")).thenReturn(false);
+        when(userRepository.findByEmail("user@gmail.com")).thenReturn(user);
+        when(redisTokenService.tryAcquirePasswordResetEmailCooldown("user@gmail.com")).thenReturn(false);
+
+        PasswordResetEmailCooldownException exception = assertThrows(
+                PasswordResetEmailCooldownException.class,
+                () -> passwordResetService.sendResetPasswordEmail(request, "127.0.0.1"));
+
+        assertEquals("Please wait 120 seconds before requesting another password reset email.",
+                exception.getMessage());
+        verify(redisTokenService, never()).createPasswordResetToken(any());
+        verify(emailTemplateService, never()).render(any(), any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -91,13 +145,14 @@ class PasswordResetServiceTest {
         ForgotPasswordRequest request = new ForgotPasswordRequest();
         request.setEmail("missing@gmail.com");
 
+        when(redisTokenService.isPasswordResetIpRateLimitExceeded("127.0.0.1")).thenReturn(false);
         when(userRepository.findByEmail("missing@gmail.com")).thenReturn(null);
 
-        passwordResetService.sendResetPasswordEmail(request);
+        passwordResetService.sendResetPasswordEmail(request, "127.0.0.1");
 
         verify(redisTokenService, never()).createPasswordResetToken(any());
         verify(emailTemplateService, never()).render(any(), any());
-        verify(emailService, never()).sendHtmlEmail(any(), any(), any());
+        verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test

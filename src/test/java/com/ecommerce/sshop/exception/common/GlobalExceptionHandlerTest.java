@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.ecommerce.sshop.exception.auth.InvalidCredentialsException;
 import com.ecommerce.sshop.exception.auth.InvalidPasswordResetTokenException;
 import com.ecommerce.sshop.exception.auth.InvalidRefreshTokenException;
+import com.ecommerce.sshop.exception.auth.PasswordResetEmailCooldownException;
+import com.ecommerce.sshop.exception.auth.PasswordResetIpRateLimitException;
 import com.ecommerce.sshop.exception.auth.UserLockedAuthException;
 import com.ecommerce.sshop.exception.common.AlreadyExistsException;
 import com.ecommerce.sshop.exception.carts.CartItemNotFoundException;
@@ -44,6 +46,24 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<ApiResponse> response = handler.handleLockedException(new UserLockedAuthException("User is locked"));
         assertEquals(HttpStatus.LOCKED, response.getStatusCode());
         assertEquals("User is locked", response.getBody().getMessage());
+    }
+
+    @Test
+    void handlesPasswordResetEmailCooldownAsTooManyRequests() {
+        ResponseEntity<ApiResponse> response = handler.handleTooManyRequestsException(
+                new PasswordResetEmailCooldownException(
+                        "Please wait 120 seconds before requesting another password reset email."));
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+        assertEquals("Please wait 120 seconds before requesting another password reset email.",
+                response.getBody().getMessage());
+    }
+
+    @Test
+    void handlesPasswordResetIpRateLimitAsTooManyRequests() {
+        ResponseEntity<ApiResponse> response = handler.handleTooManyRequestsException(
+                new PasswordResetIpRateLimitException("Too many password reset requests from this IP. Please try again later."));
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+        assertEquals("Too many password reset requests from this IP. Please try again later.", response.getBody().getMessage());
     }
 
     @Test

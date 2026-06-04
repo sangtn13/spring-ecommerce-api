@@ -10,6 +10,7 @@ import com.ecommerce.sshop.response.AuthResponse;
 import com.ecommerce.sshop.service.auth.IAuthService;
 import com.ecommerce.sshop.model.user.User;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -62,8 +63,10 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        authService.forgotPassword(request);
+    public ResponseEntity<ApiResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest httpServletRequest) {
+        authService.forgotPassword(request, resolveClientIp(httpServletRequest));
         return ResponseEntity.ok(new ApiResponse(
                 "If an account exists for that email, a password reset email has been sent.",
                 null));
@@ -73,5 +76,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ResponseEntity.ok(new ApiResponse("Password reset successfully", null));
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String remoteAddress = request.getRemoteAddr();
+        if (remoteAddress == null || remoteAddress.isBlank()) {
+            return "unknown";
+        }
+        return remoteAddress.trim();
     }
 }
